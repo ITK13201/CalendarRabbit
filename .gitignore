@@ -1,0 +1,21 @@
+# Go
+/backend/tmp/
+/backend/server
+*.out
+
+# Node
+node_modules/
+/frontend/dist/
+/frontend/.vite/
+
+# Env
+.env
+.env.local
+*.local
+
+# OS
+.DS_Store
+
+# Helm
+/charts/**/charts/
+*.tgz

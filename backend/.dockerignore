@@ -1,0 +1,6 @@
+Dockerfile
+.dockerignore
+*_test.go
+tmp/
+server
+docs/swagger/*.yaml

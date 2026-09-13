@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      # 値は 1Password 管理（op run --env-file=.env.op で注入）。
+      # op 未使用時もローカル開発で動くよう既定値を持たせる。
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-calendarrabbit}
+      MYSQL_USER: ${DB_USER:-calendarrabbit}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-calendarrabbit}
+      TZ: UTC
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      # トポロジ（ホスト名/ポート）は compose 固有のため固定。
+      PORT: "8080"
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      # 以下は 1Password 管理（op run で注入）。既定値はローカル開発用。
+      DB_USER: ${DB_USER:-calendarrabbit}
+      DB_PASSWORD: ${DB_PASSWORD:-calendarrabbit}
+      DB_NAME: ${DB_NAME:-calendarrabbit}
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:?CLAUDE_API_KEY is required (op run --env-file=.env.op ...)}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8081}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:

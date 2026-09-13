@@ -1,0 +1,76 @@
+# CalendarRabbit Helm values
+
+nameOverride: ""
+fullnameOverride: ""
+
+backend:
+  image:
+    repository: ghcr.io/itk13201/calendarrabbit-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+  env:
+    claudeModel: claude-sonnet-4-6
+    allowedOrigins: "*"
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+frontend:
+  image:
+    repository: ghcr.io/itk13201/calendarrabbit-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 80
+  # nginx が API をプロキシする先（backend Service）。空なら自動導出。
+  backendUrl: ""
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+mysql:
+  enabled: true
+  image:
+    repository: mysql
+    tag: "8.4"
+    pullPolicy: IfNotPresent
+  port: 3306
+  database: calendarrabbit
+  user: calendarrabbit
+  # 本番では secret.existingSecret / --set で上書きすること。
+  password: calendarrabbit
+  rootPassword: rootpassword
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+# 機密情報。既存 Secret を使う場合は existingSecret を指定。
+secret:
+  existingSecret: ""
+  # VPN 前提のため既定はダミー。必ず --set secret.claudeApiKey=... で上書きする。
+  claudeApiKey: "dummy-claude-api-key"
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: calendarrabbit.internal
+  tls: []

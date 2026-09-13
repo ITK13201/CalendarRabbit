@@ -1,0 +1,432 @@
+basePath: /
+definitions:
+  handler.approveRequest:
+    properties:
+      edited:
+        $ref: '#/definitions/handler.eventRequest'
+    type: object
+  handler.candidateResponse:
+    properties:
+      all_day:
+        type: boolean
+      description:
+        type: string
+      ends_at:
+        type: string
+      location:
+        type: string
+      source_url:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+    type: object
+  handler.conversationResponse:
+    properties:
+      id:
+        type: integer
+      messages:
+        items:
+          $ref: '#/definitions/handler.messageResponse'
+        type: array
+      proposals:
+        items:
+          $ref: '#/definitions/handler.proposalResponse'
+        type: array
+    type: object
+  handler.errorResponse:
+    properties:
+      error:
+        type: string
+      field:
+        type: string
+    type: object
+  handler.eventRequest:
+    properties:
+      all_day:
+        type: boolean
+      description:
+        type: string
+      ends_at:
+        type: string
+      location:
+        type: string
+      source_url:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+    type: object
+  handler.eventResponse:
+    properties:
+      all_day:
+        type: boolean
+      created_at:
+        type: string
+      description:
+        type: string
+      ends_at:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      source_url:
+        type: string
+      starts_at:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.messageResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      role:
+        type: string
+    type: object
+  handler.proposalResponse:
+    properties:
+      all_day:
+        type: boolean
+      calendar_event_id:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      ends_at:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      source_url:
+        type: string
+      starts_at:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.sendMessageRequest:
+    properties:
+      content:
+        type: string
+    type: object
+  handler.sendMessageResponse:
+    properties:
+      assistant_message:
+        $ref: '#/definitions/handler.messageResponse'
+      candidates:
+        items:
+          $ref: '#/definitions/handler.candidateResponse'
+        type: array
+      proposal:
+        $ref: '#/definitions/handler.proposalResponse'
+      user_message:
+        $ref: '#/definitions/handler.messageResponse'
+    type: object
+  handler.settingsRequest:
+    properties:
+      timezone:
+        type: string
+    type: object
+  handler.settingsResponse:
+    properties:
+      timezone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: チャット駆動の予定登録を行う CalendarRabbit のバックエンドAPI（単一ユーザー・認証なし・VPN前提）。
+  title: CalendarRabbit API
+  version: "1.0"
+paths:
+  /api/calendar/events:
+    get:
+      parameters:
+      - description: 期間開始(RFC3339)
+        in: query
+        name: from
+        type: string
+      - description: 期間終了(RFC3339)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.eventResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: イベント一覧を取得する（from/to 指定で期間取得）
+      tags:
+      - calendar
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: イベント
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.eventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.eventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: イベントを作成する
+      tags:
+      - calendar
+  /api/calendar/events/{id}:
+    delete:
+      parameters:
+      - description: イベントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: イベントを削除する
+      tags:
+      - calendar
+    get:
+      parameters:
+      - description: イベントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.eventResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: イベントを取得する
+      tags:
+      - calendar
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: イベントID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: イベント
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.eventRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.eventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: イベントを更新する
+      tags:
+      - calendar
+  /api/chat/conversations:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.conversationResponse'
+      summary: 会話履歴を取得する（単一連続スレッド）
+      tags:
+      - chat
+  /api/chat/messages:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: メッセージ
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.sendMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.sendMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: チャットメッセージを送信する
+      tags:
+      - chat
+  /api/chat/proposals/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 予定案ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 編集後内容(任意)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/handler.approveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.eventResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: 予定案を承認してカレンダーに登録する
+      tags:
+      - chat
+  /api/chat/proposals/{id}/reject:
+    post:
+      parameters:
+      - description: 予定案ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.proposalResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: 予定案を却下する
+      tags:
+      - chat
+  /api/health:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: ヘルスチェック
+      tags:
+      - health
+  /api/settings:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.settingsResponse'
+      summary: アプリ設定を取得する
+      tags:
+      - settings
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 設定
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.settingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.settingsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: アプリ設定を更新する
+      tags:
+      - settings
+swagger: "2.0"
