@@ -3,14 +3,14 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { BottomTabs } from './BottomTabs'
 
 describe('BottomTabs', () => {
-  it('3つのタブを表示しアクティブタブを識別できる', () => {
-    render(<BottomTabs active="chat" onChange={() => {}} />)
-    expect(screen.getByText('チャット')).toBeInTheDocument()
-    expect(screen.getByText('カレンダー')).toBeInTheDocument()
-    expect(screen.getByText('設定')).toBeInTheDocument()
+  it('3つのタブをカレンダー→チャット→設定の順で表示しアクティブタブを識別できる', () => {
+    render(<BottomTabs active="calendar" onChange={() => {}} />)
 
-    const chatTab = screen.getByText('チャット').closest('button')
-    expect(chatTab).toHaveAttribute('aria-current', 'page')
+    const labels = screen.getAllByRole('button').map((b) => b.textContent)
+    expect(labels).toEqual(['📅カレンダー', '💬チャット', '⚙️設定'])
+
+    const calendarTab = screen.getByText('カレンダー').closest('button')
+    expect(calendarTab).toHaveAttribute('aria-current', 'page')
   })
 
   it('タブ選択で onChange が呼ばれる', () => {

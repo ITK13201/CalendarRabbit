@@ -65,6 +65,9 @@ export const api = {
   getConversation(): Promise<ConversationResponse> {
     return request<ConversationResponse>('/chat/conversations')
   },
+  clearConversation(): Promise<void> {
+    return request<void>('/chat/conversations', { method: 'DELETE' })
+  },
   approveProposal(id: number, edited?: EventInput): Promise<CalendarEvent> {
     return request<CalendarEvent>(`/chat/proposals/${id}/approve`, {
       method: 'POST',

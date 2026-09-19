@@ -49,6 +49,7 @@ func (h *Handler) registerRoutes(engine *gin.Engine) {
 	{
 		chat.POST("/messages", h.SendMessage)
 		chat.GET("/conversations", h.GetConversation)
+		chat.DELETE("/conversations", h.ClearConversation)
 		chat.POST("/proposals/:id/approve", h.ApproveProposal)
 		chat.POST("/proposals/:id/reject", h.RejectProposal)
 	}

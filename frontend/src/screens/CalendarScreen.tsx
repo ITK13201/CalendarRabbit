@@ -6,6 +6,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { api } from '../api/client'
 import type { CalendarEvent, EventInput } from '../api/types'
 import { EventForm } from '../components/EventForm'
+import { EventDetail } from '../components/EventDetail'
 
 const locales = { ja }
 const localizer = dateFnsLocalizer({
@@ -30,6 +31,8 @@ export function CalendarScreen() {
   const [view, setView] = useState<View>('month')
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [error, setError] = useState<string | null>(null)
+  // viewing: 読み取り専用の詳細表示対象。editing: 編集フォーム対象。
+  const [viewing, setViewing] = useState<CalendarEvent | null>(null)
   const [editing, setEditing] = useState<CalendarEvent | null>(null)
   const [creating, setCreating] = useState<{ start: Date; end: Date } | null>(null)
 
@@ -75,10 +78,10 @@ export function CalendarScreen() {
     await load(current)
   }
 
-  async function handleDelete() {
-    if (!editing) return
-    await api.deleteEvent(editing.id)
+  async function handleDelete(id: number) {
+    await api.deleteEvent(id)
     setEditing(null)
+    setViewing(null)
     await load(current)
   }
 
@@ -113,13 +116,12 @@ export function CalendarScreen() {
           onView={setView}
           onNavigate={(date) => setCurrent(date)}
           views={['month', 'agenda']}
-          style={{ height: '100%' }}
-          onSelectEvent={(e: RBCEvent) => setEditing(e.resource)}
+          onSelectEvent={(e: RBCEvent) => setViewing(e.resource)}
           selectable
           onSelectSlot={(slot) => setCreating({ start: slot.start, end: slot.end })}
           messages={{
-            next: '次',
-            previous: '前',
+            next: '>',
+            previous: '<',
             today: '今日',
             month: '月',
             agenda: '一覧',
@@ -145,6 +147,18 @@ export function CalendarScreen() {
         />
       )}
 
+      {viewing && (
+        <EventDetail
+          event={viewing}
+          onEdit={() => {
+            setEditing(viewing)
+            setViewing(null)
+          }}
+          onDelete={() => handleDelete(viewing.id)}
+          onClose={() => setViewing(null)}
+        />
+      )}
+
       {editing && (
         <EventForm
           title="予定を編集"
@@ -159,7 +173,7 @@ export function CalendarScreen() {
           }}
           onSubmit={handleUpdate}
           onCancel={() => setEditing(null)}
-          onDelete={handleDelete}
+          onDelete={() => handleDelete(editing.id)}
         />
       )}
     </section>

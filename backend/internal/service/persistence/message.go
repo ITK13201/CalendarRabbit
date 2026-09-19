@@ -47,6 +47,14 @@ func (r *MessageRepository) ListByConversation(ctx context.Context, conversation
 	return out, nil
 }
 
+// DeleteByConversation は会話に属する全メッセージを削除する。
+func (r *MessageRepository) DeleteByConversation(ctx context.Context, conversationID int) error {
+	_, err := r.client.Message.Delete().
+		Where(message.HasConversationWith(conversation.IDEQ(conversationID))).
+		Exec(ctx)
+	return err
+}
+
 func mapMessage(row *ent.Message, conversationID int) *entity.Message {
 	return &entity.Message{
 		ID:             row.ID,

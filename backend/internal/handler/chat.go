@@ -13,6 +13,7 @@ import (
 type ChatUseCase interface {
 	SendMessage(ctx context.Context, content string) (*chatuc.SendResult, error)
 	GetConversation(ctx context.Context) (*chatuc.ConversationView, error)
+	ClearConversation(ctx context.Context) error
 	ApproveProposal(ctx context.Context, proposalID int, edited *chatuc.ProposalEdit) (*entity.CalendarEvent, error)
 	RejectProposal(ctx context.Context, proposalID int) (*entity.EventProposal, error)
 }
@@ -167,6 +168,20 @@ func (h *Handler) GetConversation(c *gin.Context) {
 		resp.Proposals = append(resp.Proposals, toProposalResponse(p))
 	}
 	c.JSON(http.StatusOK, resp)
+}
+
+// ClearConversation godoc
+// @Summary  会話履歴をクリアする（全メッセージ・予定案を削除）
+// @Tags     chat
+// @Success  204 "No Content"
+// @Failure  500 {object} errorResponse
+// @Router   /api/chat/conversations [delete]
+func (h *Handler) ClearConversation(c *gin.Context) {
+	if err := h.chat.ClearConversation(c.Request.Context()); err != nil {
+		respondError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 // ApproveProposal godoc

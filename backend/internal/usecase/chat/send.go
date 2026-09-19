@@ -10,6 +10,10 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/internal/service/persistence"
 )
 
+// maxHistoryTurns は Claude へ渡す会話履歴の上限ターン数。
+// 会話が伸びてもコンテキスト（トークン）が際限なく増えないよう、直近この件数に制限する。
+const maxHistoryTurns = 10
+
 // SendMessage はユーザーメッセージを受け付け、会話に永続化し、
 // Claude によるイベント抽出結果に応じて予定案を生成する。
 func (u *UseCase) SendMessage(ctx context.Context, content string) (*SendResult, error) {
@@ -83,6 +87,10 @@ func (u *UseCase) buildHistory(ctx context.Context, msgRepo *persistence.Message
 	msgs, err := msgRepo.ListByConversation(ctx, conversationID)
 	if err != nil {
 		return nil, err
+	}
+	// 直近 maxHistoryTurns ターンのみを送信対象とする（末尾を残す）。
+	if len(msgs) > maxHistoryTurns {
+		msgs = msgs[len(msgs)-maxHistoryTurns:]
 	}
 	turns := make([]chatservice.Turn, 0, len(msgs))
 	for _, m := range msgs {

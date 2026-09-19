@@ -6,8 +6,8 @@ interface BottomTabsProps {
 }
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
-  { key: 'chat', label: 'チャット', icon: '💬' },
   { key: 'calendar', label: 'カレンダー', icon: '📅' },
+  { key: 'chat', label: 'チャット', icon: '💬' },
   { key: 'settings', label: '設定', icon: '⚙️' },
 ]
 

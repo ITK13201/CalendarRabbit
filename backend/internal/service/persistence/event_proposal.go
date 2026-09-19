@@ -140,6 +140,14 @@ func (r *EventProposalRepository) MarkRejected(ctx context.Context, id int) (*en
 	return r.Get(ctx, id)
 }
 
+// DeleteByConversation は会話に属する全予定案を削除する。
+func (r *EventProposalRepository) DeleteByConversation(ctx context.Context, conversationID int) error {
+	_, err := r.client.EventProposal.Delete().
+		Where(eventproposal.HasConversationWith(conversation.IDEQ(conversationID))).
+		Exec(ctx)
+	return err
+}
+
 func mapProposal(row *ent.EventProposal) *entity.EventProposal {
 	p := &entity.EventProposal{
 		ID:          row.ID,

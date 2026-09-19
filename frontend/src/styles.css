@@ -44,6 +44,10 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* .app-content は row 方向の flex コンテナ。min-width:auto（既定）だと画面が
+     子（RBC）の min-content 幅まで膨らみ、overflow:hidden で右側が切られて見切れる。
+     min-width:0 で端末幅まで縮められるようにする（min-height:0 の横版）。 */
+  min-width: 0;
   padding: 12px;
   gap: 12px;
 }
@@ -62,7 +66,9 @@ body {
 /* Bottom tabs */
 .bottom-tabs {
   display: flex;
-  height: var(--tabbar-height);
+  /* セーフエリア（端末ナビゲーションバー）と重ならないよう下端に余白を確保する。 */
+  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
   border-top: 1px solid var(--border);
   background: var(--surface);
 }
@@ -224,10 +230,21 @@ body {
 .calendar-container {
   flex: 1;
   min-height: 0;
+  /* RBC を高さ方向に埋めるためコンテナ自身も flex コンテナにする。 */
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 8px;
+}
+
+/* RBC の高さを flex で決定的に確保する（design D4）。パーセント高さ（height:100%）
+   ではなく、ルート自体をフレックスアイテムにして確保領域を埋め、min-height:0 で
+   月表示の各行が収まるようにする。 */
+.calendar-container .rbc-calendar {
+  flex: 1 1 0%;
+  min-height: 0;
 }
 
 /* Forms / modal */
@@ -306,4 +323,76 @@ body {
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.85rem;
+}
+
+/* Event detail (read-only) */
+.detail-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.detail-value {
+  word-break: break-word;
+}
+
+.detail-description {
+  white-space: pre-wrap;
+}
+
+/* モバイル幅では一覧（agenda）テーブルをカード風の縦積みにする（D7）。 */
+@media (max-width: 600px) {
+  .rbc-agenda-view table.rbc-agenda-table thead {
+    display: none;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table,
+  .rbc-agenda-view table.rbc-agenda-table tbody,
+  .rbc-agenda-view table.rbc-agenda-table tr,
+  .rbc-agenda-view table.rbc-agenda-table td {
+    display: block;
+    width: auto;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr {
+    margin-bottom: 8px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td {
+    border-left: none;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 2px 0;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-date-cell::before {
+    content: '日付: ';
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell::before {
+    content: '時間: ';
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-event-cell::before {
+    content: '予定: ';
+    font-weight: 600;
+    color: var(--muted);
+  }
 }

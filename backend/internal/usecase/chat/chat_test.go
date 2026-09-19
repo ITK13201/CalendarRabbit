@@ -25,6 +25,17 @@ func (m *mockExtractor) Extract(_ context.Context, _ []chatservice.Turn, _ strin
 	return m.result, m.err
 }
 
+// capturingExtractor は Extract に渡された会話履歴を記録する。
+type capturingExtractor struct {
+	result    *chatservice.ExtractionResult
+	lastTurns []chatservice.Turn
+}
+
+func (c *capturingExtractor) Extract(_ context.Context, turns []chatservice.Turn, _ string) (*chatservice.ExtractionResult, error) {
+	c.lastTurns = turns
+	return c.result, nil
+}
+
 func eventResult() *chatservice.ExtractionResult {
 	start := time.Date(2026, 9, 24, 1, 0, 0, 0, time.UTC)
 	return &chatservice.ExtractionResult{
@@ -215,6 +226,65 @@ func TestApproveProposal_NotFound(t *testing.T) {
 	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
 	_, err := uc.ApproveProposal(context.Background(), 999999, nil)
 	assert.ErrorIs(t, err, derr.ErrNotFound)
+}
+
+func TestSendMessage_HistoryTruncatedToRecentTurns(t *testing.T) {
+	client := testsupport.NewClient(t)
+	ext := &capturingExtractor{result: &chatservice.ExtractionResult{
+		Status: chatservice.StatusNotFound, Message: "ok",
+	}}
+	uc := chat.New(client, ext, nil)
+	ctx := context.Background()
+
+	// maxHistoryTurns=10。各送信で user+assistant の2件が永続化される。
+	// 7回送信すると7回目送信前の履歴は12件 → 直近10件に切り詰められる。
+	const expectedLimit = 10
+	for range 7 {
+		_, err := uc.SendMessage(ctx, "予定を追加して")
+		require.NoError(t, err)
+	}
+	assert.Len(t, ext.lastTurns, expectedLimit)
+}
+
+func TestSendMessage_HistoryWithinLimitReturnsAll(t *testing.T) {
+	client := testsupport.NewClient(t)
+	ext := &capturingExtractor{result: &chatservice.ExtractionResult{
+		Status: chatservice.StatusNotFound, Message: "ok",
+	}}
+	uc := chat.New(client, ext, nil)
+	ctx := context.Background()
+
+	// 2回送信 → 3回目送信前の履歴は4件（上限10以内）なので全件渡す。
+	for range 2 {
+		_, err := uc.SendMessage(ctx, "予定を追加して")
+		require.NoError(t, err)
+	}
+	_, err := uc.SendMessage(ctx, "予定を追加して")
+	require.NoError(t, err)
+	assert.Len(t, ext.lastTurns, 4)
+}
+
+func TestClearConversation_RemovesMessagesAndProposals(t *testing.T) {
+	client := testsupport.NewClient(t)
+	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	ctx := context.Background()
+
+	_, err := uc.SendMessage(ctx, "TGSを追加")
+	require.NoError(t, err)
+
+	// クリア前は履歴と予定案が存在する
+	view, err := uc.GetConversation(ctx)
+	require.NoError(t, err)
+	require.NotEmpty(t, view.Messages)
+	require.NotEmpty(t, view.Proposals)
+
+	require.NoError(t, uc.ClearConversation(ctx))
+
+	// クリア後はメッセージ・予定案が空
+	view, err = uc.GetConversation(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, view.Messages)
+	assert.Empty(t, view.Proposals)
 }
 
 func TestGetConversation_History(t *testing.T) {

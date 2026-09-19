@@ -5,8 +5,8 @@ import { CalendarScreen } from './screens/CalendarScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 
 export function App() {
-  // 初期表示はチャット画面（spec: pwa-web-app 初期表示）。
-  const [tab, setTab] = useState<TabKey>('chat')
+  // 初期表示はカレンダー画面（spec: pwa-web-app 初期表示）。
+  const [tab, setTab] = useState<TabKey>('calendar')
 
   return (
     <div className="app">

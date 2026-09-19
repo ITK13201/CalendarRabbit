@@ -36,14 +36,43 @@ export function ChatScreen() {
     setInput('')
     setError(null)
     setNotice(null)
+
+    // 楽観的表示: 送信内容を暫定メッセージとして即座に会話へ追加する。
+    // サーバの正の id と衝突しないよう一時 id は負値を用いる。
+    const optimistic: ChatMessage = {
+      id: -Date.now(),
+      role: 'user',
+      content,
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, optimistic])
     setLoading(true)
     try {
       await api.sendMessage(content)
+      // 成功時はサーバ履歴で全置換し、暫定メッセージとの整合を取る。
       await reload()
     } catch (e) {
+      // 失敗時は暫定メッセージを取り除き、入力内容を復元する。
+      setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
+      setInput(content)
       setError(String(e))
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleClear() {
+    // 誤操作防止のため確認を挟み、承諾時のみ削除する。
+    if (!window.confirm('会話履歴と提示中の予定案をすべて削除します。よろしいですか？')) return
+    setError(null)
+    setNotice(null)
+    try {
+      await api.clearConversation()
+      setMessages([])
+      setProposals([])
+      setNotice('会話をクリアしました')
+    } catch (e) {
+      setError(String(e))
     }
   }
 
@@ -73,6 +102,14 @@ export function ChatScreen() {
     <section className="screen chat-screen">
       <header className="screen-header">
         <h1>チャット</h1>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleClear}
+          disabled={loading || messages.length === 0}
+        >
+          会話をクリア
+        </button>
       </header>
 
       <div className="chat-messages" ref={listRef}>

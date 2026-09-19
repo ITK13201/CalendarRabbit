@@ -143,6 +143,26 @@ func TestChatHandler_ConversationHistory(t *testing.T) {
 	assert.Len(t, proposals, 1)
 }
 
+func TestChatHandler_ClearConversation(t *testing.T) {
+	r := newDBRouter(t, eventExtraction())
+
+	// メッセージ送信で履歴・予定案を作成する
+	w := doJSON(t, r, http.MethodPost, "/api/chat/messages", map[string]any{"content": "TGSを追加"})
+	require.Equal(t, http.StatusOK, w.Code)
+
+	// クリアは 204 を返す
+	w = doJSON(t, r, http.MethodDelete, "/api/chat/conversations", nil)
+	require.Equal(t, http.StatusNoContent, w.Code)
+
+	// クリア後の履歴取得は空
+	w = doJSON(t, r, http.MethodGet, "/api/chat/conversations", nil)
+	require.Equal(t, http.StatusOK, w.Code)
+	var conv map[string]any
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &conv))
+	assert.Empty(t, conv["messages"].([]any))
+	assert.Empty(t, conv["proposals"].([]any))
+}
+
 func TestChatHandler_EmptyContent(t *testing.T) {
 	r := newDBRouter(t, eventExtraction())
 	w := doJSON(t, r, http.MethodPost, "/api/chat/messages", map[string]any{"content": ""})
