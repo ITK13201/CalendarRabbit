@@ -20,6 +20,11 @@ backend:
     limits:
       cpu: 500m
       memory: 256Mi
+  # backend の機密情報。既存 Secret を使う場合は existingSecret を指定。
+  secret:
+    existingSecret: ""
+    # VPN 前提のため既定はダミー。必ず --set backend.secret.claudeApiKey=... で上書きする。
+    claudeApiKey: "dummy-claude-api-key"
 
 frontend:
   image:
@@ -47,9 +52,12 @@ mysql:
   port: 3306
   database: calendarrabbit
   user: calendarrabbit
-  # 本番では secret.existingSecret / --set で上書きすること。
+  # 本番では mysql.secret.existingSecret / --set で上書きすること。
   password: calendarrabbit
   rootPassword: rootpassword
+  # mysql の機密情報。既存 Secret を使う場合は existingSecret を指定。
+  secret:
+    existingSecret: ""
   persistence:
     enabled: true
     size: 5Gi
@@ -61,12 +69,6 @@ mysql:
     limits:
       cpu: "1"
       memory: 1Gi
-
-# 機密情報。既存 Secret を使う場合は existingSecret を指定。
-secret:
-  existingSecret: ""
-  # VPN 前提のため既定はダミー。必ず --set secret.claudeApiKey=... で上書きする。
-  claudeApiKey: "dummy-claude-api-key"
 
 ingress:
   enabled: false

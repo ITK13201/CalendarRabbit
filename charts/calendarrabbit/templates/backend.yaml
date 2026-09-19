@@ -42,12 +42,12 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendarrabbit.secretName" . }}
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
                   key: DB_PASSWORD
             - name: CLAUDE_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendarrabbit.secretName" . }}
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
                   key: CLAUDE_API_KEY
           readinessProbe:
             httpGet:

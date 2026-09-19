@@ -34,12 +34,12 @@ spec:
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendarrabbit.secretName" . }}
+                  name: {{ include "calendarrabbit.mysqlSecretName" . }}
                   key: MYSQL_PASSWORD
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "calendarrabbit.secretName" . }}
+                  name: {{ include "calendarrabbit.mysqlSecretName" . }}
                   key: MYSQL_ROOT_PASSWORD
             - name: TZ
               value: UTC

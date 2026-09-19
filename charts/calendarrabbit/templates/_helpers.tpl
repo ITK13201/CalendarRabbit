@@ -29,10 +29,18 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version }}
 {{- printf "%s-mysql" (include "calendarrabbit.fullname" .) -}}
 {{- end -}}
 
-{{- define "calendarrabbit.secretName" -}}
-{{- if .Values.secret.existingSecret -}}
-{{- .Values.secret.existingSecret -}}
+{{- define "calendarrabbit.backendSecretName" -}}
+{{- if .Values.backend.secret.existingSecret -}}
+{{- .Values.backend.secret.existingSecret -}}
 {{- else -}}
-{{- printf "%s-secret" (include "calendarrabbit.fullname" .) -}}
+{{- printf "%s-secret" (include "calendarrabbit.backendFullname" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "calendarrabbit.mysqlSecretName" -}}
+{{- if .Values.mysql.secret.existingSecret -}}
+{{- .Values.mysql.secret.existingSecret -}}
+{{- else -}}
+{{- printf "%s-secret" (include "calendarrabbit.mysqlFullname" .) -}}
 {{- end -}}
 {{- end -}}
