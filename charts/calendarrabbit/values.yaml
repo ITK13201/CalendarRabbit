@@ -69,10 +69,3 @@ mysql:
     limits:
       cpu: "1"
       memory: 1Gi
-
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-  host: calendarrabbit.internal
-  tls: []
