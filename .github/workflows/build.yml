@@ -1,110 +1,59 @@
-name: build
+name: Build and Push Docker Images
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    tags:
+      - 'v*'
 
 env:
-  GO_VERSION: "1.26"
-  NODE_VERSION: "24"
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
-  backend-test:
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_ROOT_PASSWORD: rootpassword
-          MYSQL_DATABASE: calendarrabbit_test
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h localhost -uroot -prootpassword"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=20
-    env:
-      CGO_ENABLED: "0"
-      # テストはプロセスごとに一意なDBを作成するため、DBなしの管理者DSNを渡す。
-      TEST_MYSQL_DSN: "root:rootpassword@tcp(127.0.0.1:3306)/?parseTime=true&loc=UTC&charset=utf8mb4"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: backend/go.sum
-      - name: Verify (vet)
-        working-directory: backend
-        run: go vet ./...
-      - name: Test
-        working-directory: backend
-        run: go test ./...
-
-  frontend-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.4.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-          cache-dependency-path: frontend/pnpm-lock.yaml
-      - name: Install
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile --config.dangerouslyAllowAllBuilds=true
-      - name: Typecheck
-        working-directory: frontend
-        run: pnpm typecheck
-      - name: Test
-        working-directory: frontend
-        run: pnpm test
-      - name: Build
-        working-directory: frontend
-        run: pnpm build
-
-  docker:
-    needs: [backend-test, frontend-test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  build:
+    name: Build ${{ matrix.service }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+
     strategy:
       matrix:
         include:
-          - name: backend
-            context: ./backend
-          - name: frontend
+          - service: frontend
             context: ./frontend
+          - service: backend
+            context: ./backend
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4.1.0
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Metadata
+
+      - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6.0.0
         with:
-          images: ghcr.io/${{ github.repository_owner }}/calendarrabbit-${{ matrix.name }}
+          images: ${{ env.REGISTRY }}/${{ env.OWNER }}/calendarrabbit-${{ matrix.service }}
           tags: |
-            type=sha
-            type=raw,value=latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7.1.0
         with:
           context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max

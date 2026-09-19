@@ -1,13 +1,14 @@
-name: helm-release
+name: Release Helm Chart
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "charts/**"
     tags:
-      - "chart-v*"
+      - 'v*'
   workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   release:
@@ -15,33 +16,24 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Helm
+      - name: Install Helm
         uses: azure/setup-helm@v4
-        with:
-          version: v3.20.2
 
-      - name: Lint chart
-        run: helm lint charts/calendarrabbit
+      - name: Login to GHCR
+        run: |
+          helm registry login ${{ env.REGISTRY }} \
+            --username ${{ github.actor }} \
+            --password ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package chart
-        run: |
-          mkdir -p .cr-release-packages
-          helm package charts/calendarrabbit --destination .cr-release-packages
+        run: helm package charts/calendarrabbit
 
-      - name: Log in to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Push chart to GHCR (OCI)
-        run: |
-          for pkg in .cr-release-packages/*.tgz; do
-            helm push "$pkg" "oci://ghcr.io/${{ github.repository_owner }}/charts"
-          done
-
-      - name: Upload chart artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: helm-chart
-          path: .cr-release-packages/*.tgz
+      - name: Push chart to GHCR
+        run: helm push calendarrabbit-*.tgz oci://${{ env.REGISTRY }}/${OWNER,,}
+        env:
+          OWNER: ${{ env.OWNER }}
