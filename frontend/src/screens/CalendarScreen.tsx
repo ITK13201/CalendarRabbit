@@ -86,9 +86,9 @@ export function CalendarScreen() {
   }
 
   return (
-    <section className="screen calendar-screen">
-      <header className="screen-header">
-        <h1>カレンダー</h1>
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] p-4">
+      <header className="flex items-center justify-between">
+        <h1 className="m-0 text-[1.35rem] font-bold tracking-[-0.01em]">カレンダー</h1>
         <button
           type="button"
           className="btn btn-primary"
@@ -104,7 +104,7 @@ export function CalendarScreen() {
 
       {error && <div className="error">{error}</div>}
 
-      <div className="calendar-container">
+      <div className="calendar-container flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface p-3 shadow-sm">
         <Calendar
           localizer={localizer}
           culture="ja"
@@ -116,6 +116,7 @@ export function CalendarScreen() {
           onView={setView}
           onNavigate={(date) => setCurrent(date)}
           views={['month', 'agenda']}
+          formats={{ agendaDateFormat: 'yyyy.MM.dd (EEE)' }}
           onSelectEvent={(e: RBCEvent) => setViewing(e.resource)}
           selectable
           onSelectSlot={(slot) => setCreating({ start: slot.start, end: slot.end })}
@@ -125,6 +126,10 @@ export function CalendarScreen() {
             today: '今日',
             month: '月',
             agenda: '一覧',
+            date: '日付',
+            time: '時間',
+            event: '予定',
+            allDay: '終日',
             noEventsInRange: 'この期間に予定はありません',
           }}
         />

@@ -42,26 +42,31 @@ export function EventDetail({ event, onEdit, onDelete, onClose }: EventDetailPro
       <div className="modal">
         <h2>{event.title}</h2>
 
-        <div className="detail-field">
-          <span className="detail-label">日時</span>
-          <span className="detail-value">{formatRange(event)}</span>
+        <div className="flex flex-col gap-[3px] text-[0.9rem]">
+          <span className="text-[0.72rem] font-semibold uppercase tracking-[0.03em] text-muted">日時</span>
+          <span className="break-words">{formatRange(event)}</span>
         </div>
         {event.location && (
-          <div className="detail-field">
-            <span className="detail-label">場所</span>
-            <span className="detail-value">📍 {event.location}</span>
+          <div className="flex flex-col gap-[3px] text-[0.9rem]">
+            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.03em] text-muted">場所</span>
+            <span className="break-words">📍 {event.location}</span>
           </div>
         )}
         {event.description && (
-          <div className="detail-field">
-            <span className="detail-label">概要</span>
-            <span className="detail-value detail-description">{event.description}</span>
+          <div className="flex flex-col gap-[3px] text-[0.9rem]">
+            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.03em] text-muted">概要</span>
+            <span className="whitespace-pre-wrap break-words">{event.description}</span>
           </div>
         )}
         {event.source_url && (
-          <div className="detail-field">
-            <span className="detail-label">情報源</span>
-            <a className="detail-value" href={event.source_url} target="_blank" rel="noreferrer">
+          <div className="flex flex-col gap-[3px] text-[0.9rem]">
+            <span className="text-[0.72rem] font-semibold uppercase tracking-[0.03em] text-muted">情報源</span>
+            <a
+              className="break-words text-primary"
+              href={event.source_url}
+              target="_blank"
+              rel="noreferrer"
+            >
               {event.source_url}
             </a>
           </div>

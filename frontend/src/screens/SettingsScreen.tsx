@@ -49,9 +49,9 @@ export function SettingsScreen() {
   const options = TIMEZONES.includes(timezone) ? TIMEZONES : [timezone, ...TIMEZONES]
 
   return (
-    <section className="screen settings-screen">
-      <header className="screen-header">
-        <h1>設定</h1>
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] p-4">
+      <header className="flex items-center justify-between">
+        <h1 className="m-0 text-[1.35rem] font-bold tracking-[-0.01em]">設定</h1>
       </header>
 
       <label className="field">
@@ -65,7 +65,12 @@ export function SettingsScreen() {
         </select>
       </label>
 
-      <button type="button" className="btn btn-primary" onClick={save} disabled={busy || !loaded}>
+      <button
+        type="button"
+        className="btn btn-primary self-start"
+        onClick={save}
+        disabled={busy || !loaded}
+      >
         保存
       </button>
 

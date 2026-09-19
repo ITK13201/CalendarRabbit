@@ -99,9 +99,9 @@ export function ChatScreen() {
   }
 
   return (
-    <section className="screen chat-screen">
-      <header className="screen-header">
-        <h1>チャット</h1>
+    <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-[14px] p-4 pb-0">
+      <header className="flex items-center justify-between">
+        <h1 className="m-0 text-[1.35rem] font-bold tracking-[-0.01em]">チャット</h1>
         <button
           type="button"
           className="btn btn-secondary"
@@ -112,13 +112,15 @@ export function ChatScreen() {
         </button>
       </header>
 
-      <div className="chat-messages" ref={listRef}>
+      <div className="flex flex-1 flex-col gap-[10px] overflow-y-auto p-1" ref={listRef}>
         {messages.length === 0 && !loading && (
-          <p className="empty-hint">「TGSの予定を追加して」のように話しかけてください。</p>
+          <p className="mt-10 text-center text-[0.9rem] text-muted">
+            「TGSの予定を追加して」のように話しかけてください。
+          </p>
         )}
         {messages.map((m) => (
           <div key={m.id} className={`bubble bubble-${m.role}`}>
-            <div className="bubble-content">{m.content}</div>
+            <div>{m.content}</div>
             <div className="bubble-time">{formatDateTime(m.created_at)}</div>
           </div>
         ))}
@@ -126,22 +128,30 @@ export function ChatScreen() {
       </div>
 
       {proposals.filter((p) => p.status === 'pending').length > 0 && (
-        <div className="proposals">
+        <div className="flex flex-col gap-[10px]">
           {proposals
             .filter((p) => p.status === 'pending')
             .map((p) => (
-              <div key={p.id} className="proposal-card">
-                <div className="proposal-title">{p.title}</div>
-                <div className="proposal-meta">
+              <div
+                key={p.id}
+                className="rounded-md border border-border border-l-[3px] border-l-primary bg-surface p-[14px] shadow-sm"
+              >
+                <div className="text-[0.95rem] font-bold">{p.title}</div>
+                <div className="mt-0.5 text-[0.85rem] text-muted">
                   {formatDateTime(p.starts_at)} 〜 {formatDateTime(p.ends_at)}
                 </div>
-                {p.location && <div className="proposal-meta">📍 {p.location}</div>}
+                {p.location && <div className="mt-0.5 text-[0.85rem] text-muted">📍 {p.location}</div>}
                 {p.source_url && (
-                  <a className="proposal-source" href={p.source_url} target="_blank" rel="noreferrer">
+                  <a
+                    className="text-[0.85rem] font-medium text-primary no-underline hover:underline"
+                    href={p.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     情報源
                   </a>
                 )}
-                <div className="proposal-actions">
+                <div className="mt-3 flex gap-2">
                   <button type="button" className="btn btn-primary" onClick={() => handleApprove(p.id)}>
                     承認して登録
                   </button>
@@ -157,7 +167,7 @@ export function ChatScreen() {
       {notice && <div className="notice">{notice}</div>}
       {error && <div className="error">{error}</div>}
 
-      <div className="chat-input">
+      <div className="flex gap-2 px-0 pt-[10px] pb-[calc(10px+env(safe-area-inset-bottom))]">
         <input
           type="text"
           value={input}
@@ -167,6 +177,7 @@ export function ChatScreen() {
             if (e.key === 'Enter') handleSend()
           }}
           disabled={loading}
+          className="flex-1 rounded-full border border-border-strong bg-surface px-[14px] py-[11px] transition focus:border-primary focus:outline-none focus:ring-3 focus:ring-primary-ring"
         />
         <button type="button" className="btn btn-primary" onClick={handleSend} disabled={loading}>
           送信

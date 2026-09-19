@@ -9,8 +9,8 @@ export function App() {
   const [tab, setTab] = useState<TabKey>('calendar')
 
   return (
-    <div className="app">
-      <main className="app-content">
+    <div className="flex h-[100dvh] flex-col">
+      <main className="flex flex-1 overflow-hidden">
         {tab === 'chat' && <ChatScreen />}
         {tab === 'calendar' && <CalendarScreen />}
         {tab === 'settings' && <SettingsScreen />}

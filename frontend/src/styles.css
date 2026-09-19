@@ -1,261 +1,51 @@
-:root {
-  /* アクセント（インディゴ）。hover/active/薄い面色をトークン化して一貫させる。 */
-  --primary: #4f46e5;
-  --primary-dark: #4338ca;
-  --primary-hover: #4338ca;
-  --primary-active: #3730a3;
-  --primary-soft: #eef2ff;
-  --primary-ring: rgba(79, 70, 229, 0.35);
+@import "tailwindcss";
+
+/* デザイントークン。v4 の @theme は各値を CSS 変数として公開し、対応する
+   ユーティリティ（例: --color-primary → bg-primary / text-primary）を生成する。
+   残置する RBC オーバーライドからも同じ var(--color-*) を参照して一貫させる。 */
+@theme {
+  /* アクセント（violet）。hover/active/薄い面色/リングをトークン化する。 */
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-primary-active: #5b21b6;
+  --color-primary-soft: #f5f3ff;
+  --color-primary-ring: rgba(124, 58, 237, 0.35);
 
   /* ニュートラル基調。背景は薄グレー、面は白。 */
-  --bg: #f4f5f9;
-  --surface: #ffffff;
-  --surface-muted: #f8fafc;
-  --border: #e6e8ef;
-  --border-strong: #d6dae4;
-  --text: #1f2430;
-  --muted: #6b7280;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --danger-soft: #fef2f2;
-  --success-soft: #ecfdf5;
-  --success-text: #065f46;
+  --color-bg: #f4f5f9;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border: #e6e8ef;
+  --color-border-strong: #d6dae4;
+  --color-text: #1f2430;
+  --color-muted: #6b7280;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-danger-soft: #fef2f2;
+  --color-danger-ring: rgba(220, 38, 38, 0.3);
+  --color-success-soft: #ecfdf5;
+  --color-success-text: #065f46;
 
-  /* 角丸・影・トランジションのスケール。 */
+  /* 角丸・影のスケール（Tailwind 既定を本アプリの値へ上書き）。 */
   --radius-sm: 8px;
-  --radius: 12px;
+  --radius-md: 12px;
   --radius-lg: 16px;
   --radius-full: 999px;
   --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.06);
   --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
   --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.04);
   --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.16), 0 4px 8px rgba(16, 24, 40, 0.06);
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition: 150ms var(--ease);
 
+  /* 標準イージング（アニメーション・RBC の transition から参照）。 */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* 下部タブの基準高さ（セーフエリアと合算して使う）。 */
   --tabbar-height: 60px;
-}
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  margin: 0;
-  height: 100%;
-}
-
-body {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
-    'Hiragino Sans', 'Noto Sans JP', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-.app {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-}
-
-.app-content {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-}
-
-.screen {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  /* .app-content は row 方向の flex コンテナ。min-width:auto（既定）だと画面が
-     子（RBC）の min-content 幅まで膨らみ、overflow:hidden で右側が切られて見切れる。
-     min-width:0 で端末幅まで縮められるようにする（min-height:0 の横版）。 */
-  min-width: 0;
-  padding: 16px;
-  gap: 14px;
-}
-
-.screen-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.screen-header h1 {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin: 0;
-}
-
-/* Bottom tabs */
-.bottom-tabs {
-  display: flex;
-  /* セーフエリア（端末ナビゲーションバー）と重ならないよう下端に余白を確保する。 */
-  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
-}
-
-.tab {
-  flex: 1;
-  border: none;
-  background: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 500;
-  cursor: pointer;
-  position: relative;
-  transition: color var(--transition);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.tab:hover {
-  color: var(--text);
-}
-
-.tab-active {
-  color: var(--primary);
-  font-weight: 600;
-}
-
-/* アクティブタブ上端のインジケータ。 */
-.tab-active::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  width: 28px;
-  height: 3px;
-  border-radius: var(--radius-full);
-  background: var(--primary);
-}
-
-.tab-icon {
-  font-size: 1.3rem;
-  line-height: 1;
-  transition: transform var(--transition);
-}
-
-.tab-active .tab-icon {
-  transform: translateY(-1px) scale(1.05);
-}
-
-/* Buttons */
-.btn {
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  padding: 9px 16px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--transition), border-color var(--transition),
-    box-shadow var(--transition), transform var(--transition);
-  -webkit-tap-highlight-color: transparent;
-}
-
-.btn:active {
-  transform: translateY(1px);
-}
-
-.btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-.btn-primary {
-  background: var(--primary);
-  color: #fff;
-  box-shadow: var(--shadow-xs);
-}
-
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-
-.btn-primary:active {
-  background: var(--primary-active);
-}
-
-.btn-primary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-secondary {
-  background: var(--surface);
-  color: var(--text);
-  border-color: var(--border-strong);
-}
-
-.btn-secondary:hover {
-  background: var(--surface-muted);
-  border-color: var(--muted);
-}
-
-.btn-secondary:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.btn-danger {
-  background: var(--danger);
-  color: #fff;
-}
-
-.btn-danger:hover {
-  background: var(--danger-hover);
-}
-
-.btn-danger:focus-visible {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
-}
-
-/* Chat */
-.chat-screen {
-  padding-bottom: 0;
-}
-
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 4px;
-}
-
-.empty-hint {
-  color: var(--muted);
-  text-align: center;
-  margin-top: 40px;
-  font-size: 0.9rem;
-}
-
-.bubble {
-  max-width: 80%;
-  padding: 10px 14px;
-  border-radius: var(--radius-lg);
-  font-size: 0.9rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
-  animation: bubble-in 200ms var(--ease);
+  /* 簡素化して残すアニメーション（過剰な演出は削除）。 */
+  --animate-bubble-in: bubble-in 200ms var(--ease-standard);
+  --animate-overlay-in: overlay-in 160ms var(--ease-standard);
+  --animate-modal-in: modal-in 200ms var(--ease-standard);
 }
 
 @keyframes bubble-in {
@@ -269,305 +59,6 @@ body {
   }
 }
 
-.bubble-user {
-  align-self: flex-end;
-  background: var(--primary);
-  color: #fff;
-  border-bottom-right-radius: var(--radius-sm);
-  box-shadow: var(--shadow-xs);
-}
-
-.bubble-assistant {
-  align-self: flex-start;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom-left-radius: var(--radius-sm);
-  box-shadow: var(--shadow-xs);
-}
-
-.bubble-time {
-  font-size: 0.65rem;
-  opacity: 0.7;
-  margin-top: 4px;
-}
-
-.bubble.loading {
-  font-style: italic;
-  color: var(--muted);
-}
-
-.proposals {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.proposal-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--primary);
-  border-radius: var(--radius);
-  padding: 14px;
-  box-shadow: var(--shadow-sm);
-}
-
-.proposal-title {
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.proposal-meta {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.proposal-source {
-  font-size: 0.85rem;
-  color: var(--primary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.proposal-source:hover {
-  text-decoration: underline;
-}
-
-.proposal-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.chat-input {
-  display: flex;
-  gap: 8px;
-  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-}
-
-.chat-input input {
-  flex: 1;
-  padding: 11px 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-full);
-  background: var(--surface);
-  font: inherit;
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.chat-input input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-/* Calendar */
-.calendar-screen {
-  min-height: 0;
-}
-
-.calendar-container {
-  flex: 1;
-  min-height: 0;
-  /* RBC を高さ方向に埋めるためコンテナ自身も flex コンテナにする。 */
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 12px;
-  box-shadow: var(--shadow-sm);
-}
-
-/* RBC の高さを flex で決定的に確保する（design D4）。パーセント高さ（height:100%）
-   ではなく、ルート自体をフレックスアイテムにして確保領域を埋め、min-height:0 で
-   月表示の各行が収まるようにする。 */
-.calendar-container .rbc-calendar {
-  flex: 1 1 0%;
-  min-height: 0;
-}
-
-/* --- react-big-calendar の見た目調整（アクセント連動・柔らかい罫線） --- */
-.calendar-container .rbc-toolbar {
-  margin-bottom: 12px;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.calendar-container .rbc-toolbar .rbc-toolbar-label {
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-}
-
-.calendar-container .rbc-toolbar button {
-  color: var(--text);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  font-weight: 600;
-  background: var(--surface);
-  transition: background var(--transition), color var(--transition), border-color var(--transition);
-}
-
-.calendar-container .rbc-toolbar button:hover {
-  background: var(--surface-muted);
-  border-color: var(--muted);
-  color: var(--text);
-}
-
-.calendar-container .rbc-toolbar button.rbc-active,
-.calendar-container .rbc-toolbar button.rbc-active:hover,
-.calendar-container .rbc-toolbar button:active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-  box-shadow: none;
-}
-
-.calendar-container .rbc-toolbar button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-.calendar-container .rbc-month-view,
-.calendar-container .rbc-agenda-view table.rbc-agenda-table {
-  border-color: var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.calendar-container .rbc-header {
-  padding: 8px 4px;
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: var(--muted);
-  border-color: var(--border);
-}
-
-.calendar-container .rbc-month-row + .rbc-month-row,
-.calendar-container .rbc-day-bg + .rbc-day-bg,
-.calendar-container .rbc-header + .rbc-header {
-  border-color: var(--border);
-}
-
-.calendar-container .rbc-off-range-bg {
-  background: var(--surface-muted);
-}
-
-.calendar-container .rbc-today {
-  background: var(--primary-soft);
-}
-
-.calendar-container .rbc-date-cell {
-  padding: 4px 6px;
-  font-size: 0.8rem;
-}
-
-.calendar-container .rbc-now .rbc-button-link {
-  color: var(--primary);
-  font-weight: 700;
-}
-
-.calendar-container .rbc-event,
-.calendar-container .rbc-agenda-view .rbc-event {
-  background: var(--primary);
-  border: none;
-  border-radius: 6px;
-  padding: 1px 6px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  box-shadow: var(--shadow-xs);
-}
-
-.calendar-container .rbc-event.rbc-selected {
-  background: var(--primary-active);
-}
-
-.calendar-container .rbc-event:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-.calendar-container .rbc-show-more {
-  color: var(--primary);
-  font-weight: 600;
-  background: transparent;
-}
-
-/* Forms / modal */
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.field > span {
-  color: var(--muted);
-}
-
-.field-inline {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-}
-
-.field-inline > span {
-  color: var(--text);
-}
-
-.field input,
-.field select,
-.field textarea {
-  padding: 9px 11px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  font: inherit;
-  font-weight: 400;
-  color: var(--text);
-  transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-ring);
-}
-
-.field-inline input[type='checkbox'] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
-}
-
-.field textarea {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.settings-screen .btn {
-  align-self: flex-start;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.45);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  z-index: 100;
-  animation: overlay-in 160ms var(--ease);
-}
-
 @keyframes overlay-in {
   from {
     opacity: 0;
@@ -575,21 +66,6 @@ body {
   to {
     opacity: 1;
   }
-}
-
-.modal {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  width: 100%;
-  max-width: 420px;
-  max-height: 90dvh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: var(--shadow-lg);
-  animation: modal-in 200ms var(--ease);
 }
 
 @keyframes modal-in {
@@ -603,68 +79,296 @@ body {
   }
 }
 
-.modal h2 {
-  margin: 0 0 4px;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+/* 最小グローバル（Preflight で box-sizing / form font などは既に処理される）。 */
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
 }
 
-.modal-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
+body {
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 特殊値（tabbar 高さ + セーフエリア）のみ最小CSSで残す。
+   display/border/背景/ブラーはコンポーネント側のユーティリティで表現する。 */
+.bottom-tabs {
+  height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 複数箇所で再利用するパターンはセマンティッククラスとして定義する（design D2b）。 */
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply cursor-pointer rounded-sm border border-transparent px-4 py-[9px] text-[0.9rem]
+      font-semibold transition active:translate-y-px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:focus-visible {
+    @apply outline-none ring-3 ring-primary-ring;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white shadow-xs hover:bg-primary-hover active:bg-primary-active
+      disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-secondary {
+    @apply border-border-strong bg-surface text-text hover:border-muted hover:bg-surface-muted
+      disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger-hover;
+  }
+
+  .btn-danger:focus-visible {
+    @apply ring-danger-ring;
+  }
+
+  /* Forms */
+  .field {
+    @apply flex flex-col gap-[5px] text-[0.85rem] font-medium;
+  }
+
+  .field > span {
+    @apply text-muted;
+  }
+
+  .field-inline {
+    @apply flex-row items-center gap-2;
+  }
+
+  .field-inline > span {
+    @apply text-text;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    @apply rounded-sm border border-border-strong bg-surface px-[11px] py-[9px] font-normal
+      text-text transition;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    @apply border-primary outline-none ring-3 ring-primary-ring;
+  }
+
+  .field-inline input[type='checkbox'] {
+    @apply h-[18px] w-[18px];
+    accent-color: var(--color-primary);
+  }
+
+  .field textarea {
+    @apply min-h-[72px] resize-y;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    @apply fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-[3px]
+      animate-overlay-in;
+    background: rgba(17, 24, 39, 0.45);
+  }
+
+  .modal {
+    @apply flex w-full max-w-[420px] max-h-[90dvh] flex-col gap-3 overflow-y-auto rounded-lg
+      bg-surface p-5 shadow-lg animate-modal-in;
+  }
+
+  .modal h2 {
+    @apply m-0 mb-1 text-[1.15rem] font-bold tracking-[-0.01em];
+  }
+
+  .modal-actions {
+    @apply mt-2 flex flex-wrap gap-2;
+  }
+
+  /* Chat bubbles */
+  .bubble {
+    @apply max-w-[80%] whitespace-pre-wrap break-words rounded-lg px-[14px] py-[10px]
+      text-[0.9rem] leading-normal animate-bubble-in;
+  }
+
+  .bubble-user {
+    @apply self-end rounded-br-sm bg-primary text-white shadow-xs;
+  }
+
+  .bubble-assistant {
+    @apply self-start rounded-bl-sm border border-border bg-surface shadow-xs;
+  }
+
+  .bubble-time {
+    @apply mt-1 text-[0.65rem] opacity-70;
+  }
+
+  .bubble.loading {
+    @apply italic text-muted;
+  }
+
+  /* Notices（複数画面で再利用） */
+  .notice {
+    @apply rounded-sm border border-[rgba(6,95,70,0.15)] bg-success-soft px-3 py-[10px]
+      text-[0.85rem] text-success-text;
+  }
+
+  .error {
+    @apply rounded-sm border border-[rgba(220,38,38,0.15)] bg-danger-soft px-3 py-[10px]
+      text-[0.85rem] text-danger;
+  }
+}
+
+/* --- react-big-calendar の内部 DOM オーバーライド（残置スコープ, design D3）。
+   Tailwind では表現しにくいためプレーンCSSで残すが、色は @theme 由来の
+   CSS 変数へ置換してトークンと連動させる。 */
+
+/* RBC の高さを flex で決定的に確保する（design D4）。 */
+.calendar-container .rbc-calendar {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.calendar-container .rbc-toolbar {
+  margin-bottom: 12px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
-.notice {
-  background: var(--success-soft);
-  color: var(--success-text);
-  border: 1px solid rgba(6, 95, 70, 0.15);
+.calendar-container .rbc-toolbar .rbc-toolbar-label {
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.calendar-container .rbc-toolbar button {
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 0.85rem;
-}
-
-.error {
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid rgba(220, 38, 38, 0.15);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-size: 0.85rem;
-}
-
-/* Event detail (read-only) */
-.detail-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 0.9rem;
-}
-
-.detail-label {
-  font-size: 0.72rem;
+  padding: 6px 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--muted);
+  background: var(--color-surface);
+  transition: background 150ms var(--ease-standard), color 150ms var(--ease-standard),
+    border-color 150ms var(--ease-standard);
 }
 
-.detail-value {
-  word-break: break-word;
+.calendar-container .rbc-toolbar button:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-muted);
+  color: var(--color-text);
 }
 
-.detail-value a,
-a.detail-value {
-  color: var(--primary);
+.calendar-container .rbc-toolbar button.rbc-active,
+.calendar-container .rbc-toolbar button.rbc-active:hover,
+.calendar-container .rbc-toolbar button:active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  box-shadow: none;
 }
 
-.detail-description {
-  white-space: pre-wrap;
+.calendar-container .rbc-toolbar button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-ring);
 }
 
-/* モバイル幅では一覧（agenda）テーブルをカード風の縦積みにする（D7）。 */
+.calendar-container .rbc-month-view,
+.calendar-container .rbc-agenda-view table.rbc-agenda-table {
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.calendar-container .rbc-header {
+  padding: 8px 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+.calendar-container .rbc-month-row + .rbc-month-row,
+.calendar-container .rbc-day-bg + .rbc-day-bg,
+.calendar-container .rbc-header + .rbc-header {
+  border-color: var(--color-border);
+}
+
+.calendar-container .rbc-off-range-bg {
+  background: var(--color-surface-muted);
+}
+
+.calendar-container .rbc-today {
+  background: var(--color-primary-soft);
+}
+
+.calendar-container .rbc-date-cell {
+  padding: 4px 6px;
+  font-size: 0.8rem;
+}
+
+.calendar-container .rbc-now .rbc-button-link {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.calendar-container .rbc-event,
+.calendar-container .rbc-agenda-view .rbc-event {
+  background: var(--color-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-xs);
+}
+
+.calendar-container .rbc-event.rbc-selected {
+  background: var(--color-primary-active);
+}
+
+.calendar-container .rbc-event:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-ring);
+}
+
+.calendar-container .rbc-show-more {
+  color: var(--color-primary);
+  font-weight: 600;
+  background: transparent;
+}
+
+/* デスクトップ幅の一覧（agenda）テーブルの可読性。予定名を主役に、日付・時間は控えめに。 */
+.calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+  padding: 10px 12px;
+  vertical-align: top;
+}
+
+.calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr:hover {
+  background: var(--color-surface-muted);
+}
+
+.calendar-container .rbc-agenda-date-cell,
+.calendar-container .rbc-agenda-time-cell {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.calendar-container .rbc-agenda-event-cell {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* モバイル幅では一覧（agenda）テーブルをカード風の縦積みにする（残置スコープ）。
+   予定名を見出しとして最上部・太字で強調し、日付・時間はメタ情報として控えめにする。 */
 @media (max-width: 600px) {
   .rbc-agenda-view table.rbc-agenda-table thead {
     display: none;
@@ -679,44 +383,53 @@ a.detail-value {
   }
 
   .rbc-agenda-view table.rbc-agenda-table tbody > tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 2px;
     margin-bottom: 8px;
     padding: 10px 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
     box-shadow: var(--shadow-xs);
   }
 
-  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td + td {
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 0;
+    white-space: normal;
+    word-break: break-word;
     border-left: none;
   }
 
-  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
-    padding: 2px 0;
-    white-space: normal;
-    word-break: break-word;
+  /* 予定名を見出しとして最上部・太字で1行占有して表示する。 */
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-event-cell {
+    order: -1;
+    flex-basis: 100%;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--color-text);
+  }
+
+  /* 日付・時間はメタ情報として控えめに、同一行へ並べる（アイコン付き）。 */
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-date-cell,
+  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+    font-size: 0.8rem;
+    color: var(--color-muted);
   }
 
   .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-date-cell::before {
-    content: '日付: ';
-    font-weight: 600;
-    color: var(--muted);
+    content: '📅 ';
   }
 
   .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell::before {
-    content: '時間: ';
-    font-weight: 600;
-    color: var(--muted);
-  }
-
-  .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-event-cell::before {
-    content: '予定: ';
-    font-weight: 600;
-    color: var(--muted);
+    content: '🕐 ';
   }
 }
 
-/* モーションを抑えたいユーザーにはアニメーションを無効化する。 */
+/* モーションを抑えたいユーザーにはアニメーションを無効化する（横断的挙動のため残置）。 */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
