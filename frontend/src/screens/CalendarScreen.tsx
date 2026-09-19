@@ -7,6 +7,7 @@ import { api } from '../api/client'
 import type { CalendarEvent, EventInput } from '../api/types'
 import { EventForm } from '../components/EventForm'
 import { EventDetail } from '../components/EventDetail'
+import { EventAgenda, type RBCEvent } from '../components/EventAgenda'
 
 const locales = { ja }
 const localizer = dateFnsLocalizer({
@@ -16,15 +17,6 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 })
-
-interface RBCEvent {
-  id: number
-  title: string
-  start: Date
-  end: Date
-  allDay: boolean
-  resource: CalendarEvent
-}
 
 export function CalendarScreen() {
   const [current, setCurrent] = useState(new Date())
@@ -115,8 +107,7 @@ export function CalendarScreen() {
           view={view}
           onView={setView}
           onNavigate={(date) => setCurrent(date)}
-          views={['month', 'agenda']}
-          formats={{ agendaDateFormat: 'yyyy.MM.dd (EEE)' }}
+          views={{ month: true, agenda: EventAgenda }}
           onSelectEvent={(e: RBCEvent) => setViewing(e.resource)}
           selectable
           onSelectSlot={(slot) => setCreating({ start: slot.start, end: slot.end })}

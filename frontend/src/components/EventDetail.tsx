@@ -8,11 +8,23 @@ interface EventDetailProps {
   onClose: () => void
 }
 
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
 function formatRange(event: CalendarEvent): string {
   const start = new Date(event.starts_at)
   const end = new Date(event.ends_at)
   if (event.all_day) {
-    return `${start.toLocaleDateString('ja-JP', { dateStyle: 'medium' })}（終日）`
+    const dateOf = (d: Date) => d.toLocaleDateString('ja-JP', { dateStyle: 'medium' })
+    // 複数日にまたがる終日予定は開始〜終了を表示する。
+    return isSameDay(start, end)
+      ? `${dateOf(start)}（終日）`
+      : `${dateOf(start)} 〜 ${dateOf(end)}（終日）`
   }
   const opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium', timeStyle: 'short' }
   return `${start.toLocaleString('ja-JP', opts)} 〜 ${end.toLocaleString('ja-JP', opts)}`
