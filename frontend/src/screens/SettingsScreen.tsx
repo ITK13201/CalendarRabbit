@@ -76,6 +76,10 @@ export function SettingsScreen() {
 
       {notice && <div className="notice">{notice}</div>}
       {error && <div className="error">{error}</div>}
+
+      <footer className="mt-auto pt-4 text-xs text-[var(--color-text-muted,#9ca3af)]">
+        CalendarRabbit v{__APP_VERSION__}
+      </footer>
     </section>
   )
 }
