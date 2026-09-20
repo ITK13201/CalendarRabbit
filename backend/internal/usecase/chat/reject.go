@@ -12,8 +12,11 @@ import (
 
 // RejectProposal は pending の予定案を却下する（カレンダー登録は行わない）。
 // 処理済みの予定案は却下できない。
-func (u *UseCase) RejectProposal(ctx context.Context, proposalID int) (*entity.EventProposal, error) {
-	propRepo := persistence.NewEventProposalRepository(u.client)
+func (u *UseCase) RejectProposal(ctx context.Context, proposalID int) (res *entity.EventProposal, err error) {
+	defer logging.Trace(ctx, u.logger, "chat.UseCase.RejectProposal",
+		logging.Args{"proposalID": proposalID}, &res, &err)()
+
+	propRepo := persistence.NewEventProposalRepository(u.client, u.logger)
 
 	proposal, err := propRepo.Get(ctx, proposalID)
 	if err != nil {

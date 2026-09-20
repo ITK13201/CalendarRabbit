@@ -15,7 +15,7 @@ import (
 
 func newProvider(t *testing.T) calendarprovider.CalendarProvider {
 	client := testsupport.NewClient(t)
-	return calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client))
+	return calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client, nil))
 }
 
 func TestDBProvider_CRUD(t *testing.T) {

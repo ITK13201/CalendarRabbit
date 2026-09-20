@@ -33,9 +33,10 @@ func (s *stubExtractor) Extract(_ context.Context, _ []chatservice.Turn, _ strin
 func newDBRouter(t *testing.T, extraction *chatservice.ExtractionResult) *gin.Engine {
 	client := testsupport.NewClient(t)
 
-	calUC := calendar.New(calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client)), nil)
-	setUC := settings.New(persistence.NewAppSettingRepository(client), nil)
-	chatUC := chatuc.New(client, &stubExtractor{result: extraction}, nil)
+	calUC := calendar.New(calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client, nil)), nil)
+	setUC := settings.New(persistence.NewAppSettingRepository(client, nil), nil)
+	extractors := map[string]chatservice.Extractor{"deepseek": &stubExtractor{result: extraction}}
+	chatUC := chatuc.New(client, extractors, setUC, "deepseek", nil)
 
 	h := handler.New(handler.Deps{Calendar: calUC, Settings: setUC, Chat: chatUC})
 	return handler.NewRouter(h, handler.RouterConfig{AllowedOrigins: []string{"*"}})

@@ -16,7 +16,7 @@ import (
 
 func TestCalendarEventRepository_CRUD(t *testing.T) {
 	client := testsupport.NewClient(t)
-	repo := persistence.NewCalendarEventRepository(client)
+	repo := persistence.NewCalendarEventRepository(client, nil)
 	ctx := context.Background()
 
 	start := time.Date(2026, 9, 26, 10, 0, 0, 0, time.UTC)
@@ -54,7 +54,7 @@ func TestCalendarEventRepository_CRUD(t *testing.T) {
 
 func TestCalendarEventRepository_NotFound(t *testing.T) {
 	client := testsupport.NewClient(t)
-	repo := persistence.NewCalendarEventRepository(client)
+	repo := persistence.NewCalendarEventRepository(client, nil)
 	ctx := context.Background()
 
 	_, err := repo.Get(ctx, 999999)
@@ -65,7 +65,7 @@ func TestCalendarEventRepository_NotFound(t *testing.T) {
 
 func TestCalendarEventRepository_ListByPeriod(t *testing.T) {
 	client := testsupport.NewClient(t)
-	repo := persistence.NewCalendarEventRepository(client)
+	repo := persistence.NewCalendarEventRepository(client, nil)
 	ctx := context.Background()
 
 	// 対象月: 2026-09-01 .. 2026-10-01
@@ -99,30 +99,33 @@ func TestCalendarEventRepository_ListByPeriod(t *testing.T) {
 
 func TestAppSettingRepository_UpsertAndGet(t *testing.T) {
 	client := testsupport.NewClient(t)
-	repo := persistence.NewAppSettingRepository(client)
+	repo := persistence.NewAppSettingRepository(client, nil)
 	ctx := context.Background()
 
 	_, err := repo.Get(ctx)
 	assert.ErrorIs(t, err, derr.ErrNotFound)
 
-	created, err := repo.Upsert(ctx, "Asia/Tokyo")
+	created, err := repo.Upsert(ctx, persistence.AppSettingInput{Timezone: "Asia/Tokyo", LLMProvider: "deepseek"})
 	require.NoError(t, err)
 	assert.Equal(t, "Asia/Tokyo", created.Timezone)
+	assert.Equal(t, "deepseek", created.LLMProvider)
 
-	updated, err := repo.Upsert(ctx, "UTC")
+	updated, err := repo.Upsert(ctx, persistence.AppSettingInput{Timezone: "UTC", LLMProvider: "claude"})
 	require.NoError(t, err)
 	assert.Equal(t, "UTC", updated.Timezone)
+	assert.Equal(t, "claude", updated.LLMProvider)
 	assert.Equal(t, created.ID, updated.ID, "single-record: same row is updated")
 
 	got, err := repo.Get(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "UTC", got.Timezone)
+	assert.Equal(t, "claude", got.LLMProvider)
 }
 
 func TestConversationAndMessageRepository(t *testing.T) {
 	client := testsupport.NewClient(t)
-	convRepo := persistence.NewConversationRepository(client)
-	msgRepo := persistence.NewMessageRepository(client)
+	convRepo := persistence.NewConversationRepository(client, nil)
+	msgRepo := persistence.NewMessageRepository(client, nil)
 	ctx := context.Background()
 
 	conv, err := convRepo.GetOrCreate(ctx)
@@ -149,10 +152,10 @@ func TestConversationAndMessageRepository(t *testing.T) {
 
 func TestEventProposalRepository_LifecycleWithApproval(t *testing.T) {
 	client := testsupport.NewClient(t)
-	convRepo := persistence.NewConversationRepository(client)
-	msgRepo := persistence.NewMessageRepository(client)
-	propRepo := persistence.NewEventProposalRepository(client)
-	eventRepo := persistence.NewCalendarEventRepository(client)
+	convRepo := persistence.NewConversationRepository(client, nil)
+	msgRepo := persistence.NewMessageRepository(client, nil)
+	propRepo := persistence.NewEventProposalRepository(client, nil)
+	eventRepo := persistence.NewCalendarEventRepository(client, nil)
 	ctx := context.Background()
 
 	conv, err := convRepo.GetOrCreate(ctx)
@@ -204,14 +207,14 @@ func TestWithTx_RollbackOnError(t *testing.T) {
 
 	sentinel := assert.AnError
 	err := persistence.WithTx(ctx, client, func(txClient *ent.Client) error {
-		_, cerr := persistence.NewConversationRepository(txClient).GetOrCreate(ctx)
+		_, cerr := persistence.NewConversationRepository(txClient, nil).GetOrCreate(ctx)
 		require.NoError(t, cerr)
 		return sentinel // ロールバックさせる
 	})
 	assert.ErrorIs(t, err, sentinel)
 
 	// ロールバックされたので会話は存在しない
-	count, err := persistence.NewCalendarEventRepository(client).List(ctx)
+	count, err := persistence.NewCalendarEventRepository(client, nil).List(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, count)
 }

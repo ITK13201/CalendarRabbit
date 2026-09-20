@@ -16,10 +16,13 @@ const maxHistoryTurns = 10
 
 // SendMessage はユーザーメッセージを受け付け、会話に永続化し、
 // Claude によるイベント抽出結果に応じて予定案を生成する。
-func (u *UseCase) SendMessage(ctx context.Context, content string) (*SendResult, error) {
-	convRepo := persistence.NewConversationRepository(u.client)
-	msgRepo := persistence.NewMessageRepository(u.client)
-	propRepo := persistence.NewEventProposalRepository(u.client)
+func (u *UseCase) SendMessage(ctx context.Context, content string) (res *SendResult, err error) {
+	defer logging.Trace(ctx, u.logger, "chat.UseCase.SendMessage",
+		logging.Args{"content": content}, &res, &err)()
+
+	convRepo := persistence.NewConversationRepository(u.client, u.logger)
+	msgRepo := persistence.NewMessageRepository(u.client, u.logger)
+	propRepo := persistence.NewEventProposalRepository(u.client, u.logger)
 
 	conv, err := convRepo.GetOrCreate(ctx)
 	if err != nil {
@@ -37,7 +40,7 @@ func (u *UseCase) SendMessage(ctx context.Context, content string) (*SendResult,
 		return nil, err
 	}
 
-	extraction, err := u.extractor.Extract(ctx, history, content)
+	extraction, err := u.resolveExtractor(ctx).Extract(ctx, history, content)
 	if err != nil {
 		return nil, err
 	}

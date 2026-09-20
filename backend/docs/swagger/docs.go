@@ -221,6 +221,23 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "会話履歴をクリアする（全メッセージ・予定案を削除）",
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    }
+                }
             }
         },
         "/api/chat/messages": {
@@ -654,6 +671,9 @@ const docTemplate = `{
         "handler.settingsRequest": {
             "type": "object",
             "properties": {
+                "llm_provider": {
+                    "type": "string"
+                },
                 "timezone": {
                     "type": "string"
                 }
@@ -662,6 +682,9 @@ const docTemplate = `{
         "handler.settingsResponse": {
             "type": "object",
             "properties": {
+                "llm_provider": {
+                    "type": "string"
+                },
                 "timezone": {
                     "type": "string"
                 },

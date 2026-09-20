@@ -8,6 +8,7 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/service/calendarprovider"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/service/persistence"
 )
 
 func itoa(i int) string { return strconv.Itoa(i) }
@@ -92,7 +93,7 @@ func (m *memSettingsRepo) Get(_ context.Context) (*entity.AppSetting, error) {
 	return m.current, nil
 }
 
-func (m *memSettingsRepo) Upsert(_ context.Context, timezone string) (*entity.AppSetting, error) {
-	m.current = &entity.AppSetting{ID: 1, Timezone: timezone, UpdatedAt: time.Now().UTC()}
+func (m *memSettingsRepo) Upsert(_ context.Context, in persistence.AppSettingInput) (*entity.AppSetting, error) {
+	m.current = &entity.AppSetting{ID: 1, Timezone: in.Timezone, LLMProvider: in.LLMProvider, UpdatedAt: time.Now().UTC()}
 	return m.current, nil
 }

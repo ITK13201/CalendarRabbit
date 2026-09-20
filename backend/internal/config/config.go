@@ -20,18 +20,42 @@ type Config struct {
 	DBPassword string
 	DBName     string
 
+	// LLM provider 選択（"deepseek" | "claude"）
+	LLMProvider string
+
 	// Claude
 	ClaudeAPIKey string
 	ClaudeModel  string
+
+	// DeepSeek（OpenAI 互換 API）
+	DeepSeekAPIKey  string
+	DeepSeekModel   string
+	DeepSeekBaseURL string
+
+	// web 検索 API（DeepSeek 経路の事前検索用）
+	SearchProvider   string
+	SearchAPIKey     string
+	SearchMaxResults int
 
 	// CORS
 	AllowedOrigins []string
 }
 
+// LLM プロバイダ識別子。
 const (
-	defaultPort        = "8080"
-	defaultDBPort      = "3306"
-	defaultClaudeModel = "claude-sonnet-4-6"
+	ProviderDeepSeek = "deepseek"
+	ProviderClaude   = "claude"
+)
+
+const (
+	defaultPort             = "8080"
+	defaultDBPort           = "3306"
+	defaultClaudeModel      = "claude-sonnet-4-6"
+	defaultLLMProvider      = ProviderDeepSeek
+	defaultDeepSeekModel    = "deepseek-v4-pro"
+	defaultDeepSeekBaseURL  = "https://api.deepseek.com"
+	defaultSearchProvider   = "tavily"
+	defaultSearchMaxResults = 10
 )
 
 // Load は環境変数から設定を読み込む。
@@ -47,16 +71,42 @@ func Load() (*Config, error) {
 		return v
 	}
 
+	provider := strings.ToLower(envOrDefault("LLM_PROVIDER", defaultLLMProvider))
+
 	cfg := &Config{
-		Port:           envOrDefault("PORT", defaultPort),
-		DBHost:         requireEnv("DB_HOST"),
-		DBPort:         envOrDefault("DB_PORT", defaultDBPort),
-		DBUser:         requireEnv("DB_USER"),
-		DBPassword:     requireEnv("DB_PASSWORD"),
-		DBName:         requireEnv("DB_NAME"),
-		ClaudeAPIKey:   requireEnv("CLAUDE_API_KEY"),
-		ClaudeModel:    envOrDefault("CLAUDE_MODEL", defaultClaudeModel),
-		AllowedOrigins: parseOrigins(envOrDefault("ALLOWED_ORIGINS", "http://localhost:5173")),
+		Port:             envOrDefault("PORT", defaultPort),
+		DBHost:           requireEnv("DB_HOST"),
+		DBPort:           envOrDefault("DB_PORT", defaultDBPort),
+		DBUser:           requireEnv("DB_USER"),
+		DBPassword:       requireEnv("DB_PASSWORD"),
+		DBName:           requireEnv("DB_NAME"),
+		LLMProvider:      provider,
+		ClaudeAPIKey:     os.Getenv("CLAUDE_API_KEY"),
+		ClaudeModel:      envOrDefault("CLAUDE_MODEL", defaultClaudeModel),
+		DeepSeekAPIKey:   os.Getenv("DEEPSEEK_API_KEY"),
+		DeepSeekModel:    envOrDefault("DEEPSEEK_MODEL", defaultDeepSeekModel),
+		DeepSeekBaseURL:  envOrDefault("DEEPSEEK_BASE_URL", defaultDeepSeekBaseURL),
+		SearchProvider:   envOrDefault("SEARCH_PROVIDER", defaultSearchProvider),
+		SearchAPIKey:     os.Getenv("SEARCH_API_KEY"),
+		SearchMaxResults: envIntOrDefault("SEARCH_MAX_RESULTS", defaultSearchMaxResults),
+		AllowedOrigins:   parseOrigins(envOrDefault("ALLOWED_ORIGINS", "http://localhost:5173")),
+	}
+
+	// プロバイダに応じて必須項目を切り替える（design.md D6）。
+	switch provider {
+	case ProviderDeepSeek:
+		if cfg.DeepSeekAPIKey == "" {
+			missing = append(missing, "DEEPSEEK_API_KEY")
+		}
+		if cfg.SearchAPIKey == "" {
+			missing = append(missing, "SEARCH_API_KEY")
+		}
+	case ProviderClaude:
+		if cfg.ClaudeAPIKey == "" {
+			missing = append(missing, "CLAUDE_API_KEY")
+		}
+	default:
+		return nil, fmt.Errorf("unknown LLM_PROVIDER: %q (want %q or %q)", provider, ProviderDeepSeek, ProviderClaude)
 	}
 
 	if len(missing) > 0 {
@@ -79,6 +129,19 @@ func envOrDefault(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// envIntOrDefault は整数の環境変数を読み込む。未設定・パース不能なら既定値を返す。
+func envIntOrDefault(key string, def int) int {
+	v := os.Getenv(key)
+	if v == "" {
+		return def
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return def
+	}
+	return n
 }
 
 func parseOrigins(raw string) []string {

@@ -16,12 +16,15 @@ import (
 // イベントを作成、予定案を approved に更新する（トランザクション）。
 // edited が指定された場合はその内容でイベントを作成する。
 // 処理済み（approved/rejected）の予定案は再承認できない（design.md D2）。
-func (u *UseCase) ApproveProposal(ctx context.Context, proposalID int, edited *ProposalEdit) (*entity.CalendarEvent, error) {
+func (u *UseCase) ApproveProposal(ctx context.Context, proposalID int, edited *ProposalEdit) (res *entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, u.logger, "chat.UseCase.ApproveProposal",
+		logging.Args{"proposalID": proposalID, "edited": edited}, &res, &err)()
+
 	var created *entity.CalendarEvent
 
-	err := persistence.WithTx(ctx, u.client, func(txClient *ent.Client) error {
-		propRepo := persistence.NewEventProposalRepository(txClient)
-		provider := calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(txClient))
+	err = persistence.WithTx(ctx, u.client, func(txClient *ent.Client) error {
+		propRepo := persistence.NewEventProposalRepository(txClient, u.logger)
+		provider := calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(txClient, u.logger))
 
 		proposal, err := propRepo.Get(ctx, proposalID)
 		if err != nil {

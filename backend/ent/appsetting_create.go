@@ -34,6 +34,20 @@ func (_c *AppSettingCreate) SetNillableTimezone(v *string) *AppSettingCreate {
 	return _c
 }
 
+// SetLlmProvider sets the "llm_provider" field.
+func (_c *AppSettingCreate) SetLlmProvider(v appsetting.LlmProvider) *AppSettingCreate {
+	_c.mutation.SetLlmProvider(v)
+	return _c
+}
+
+// SetNillableLlmProvider sets the "llm_provider" field if the given value is not nil.
+func (_c *AppSettingCreate) SetNillableLlmProvider(v *appsetting.LlmProvider) *AppSettingCreate {
+	if v != nil {
+		_c.SetLlmProvider(*v)
+	}
+	return _c
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_c *AppSettingCreate) SetUpdatedAt(v time.Time) *AppSettingCreate {
 	_c.mutation.SetUpdatedAt(v)
@@ -87,6 +101,10 @@ func (_c *AppSettingCreate) defaults() {
 		v := appsetting.DefaultTimezone
 		_c.mutation.SetTimezone(v)
 	}
+	if _, ok := _c.mutation.LlmProvider(); !ok {
+		v := appsetting.DefaultLlmProvider
+		_c.mutation.SetLlmProvider(v)
+	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		v := appsetting.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
@@ -101,6 +119,14 @@ func (_c *AppSettingCreate) check() error {
 	if v, ok := _c.mutation.Timezone(); ok {
 		if err := appsetting.TimezoneValidator(v); err != nil {
 			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "AppSetting.timezone": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.LlmProvider(); !ok {
+		return &ValidationError{Name: "llm_provider", err: errors.New(`ent: missing required field "AppSetting.llm_provider"`)}
+	}
+	if v, ok := _c.mutation.LlmProvider(); ok {
+		if err := appsetting.LlmProviderValidator(v); err != nil {
+			return &ValidationError{Name: "llm_provider", err: fmt.Errorf(`ent: validator failed for field "AppSetting.llm_provider": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
@@ -135,6 +161,10 @@ func (_c *AppSettingCreate) createSpec() (*AppSetting, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Timezone(); ok {
 		_spec.SetField(appsetting.FieldTimezone, field.TypeString, value)
 		_node.Timezone = value
+	}
+	if value, ok := _c.mutation.LlmProvider(); ok {
+		_spec.SetField(appsetting.FieldLlmProvider, field.TypeEnum, value)
+		_node.LlmProvider = value
 	}
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(appsetting.FieldUpdatedAt, field.TypeTime, value)

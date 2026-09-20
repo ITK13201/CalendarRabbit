@@ -42,6 +42,7 @@ type AppSettingMutation struct {
 	typ           string
 	id            *int
 	timezone      *string
+	llm_provider  *appsetting.LlmProvider
 	updated_at    *time.Time
 	clearedFields map[string]struct{}
 	done          bool
@@ -183,6 +184,42 @@ func (m *AppSettingMutation) ResetTimezone() {
 	m.timezone = nil
 }
 
+// SetLlmProvider sets the "llm_provider" field.
+func (m *AppSettingMutation) SetLlmProvider(ap appsetting.LlmProvider) {
+	m.llm_provider = &ap
+}
+
+// LlmProvider returns the value of the "llm_provider" field in the mutation.
+func (m *AppSettingMutation) LlmProvider() (r appsetting.LlmProvider, exists bool) {
+	v := m.llm_provider
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLlmProvider returns the old "llm_provider" field's value of the AppSetting entity.
+// If the AppSetting object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *AppSettingMutation) OldLlmProvider(ctx context.Context) (v appsetting.LlmProvider, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLlmProvider is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLlmProvider requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLlmProvider: %w", err)
+	}
+	return oldValue.LlmProvider, nil
+}
+
+// ResetLlmProvider resets all changes to the "llm_provider" field.
+func (m *AppSettingMutation) ResetLlmProvider() {
+	m.llm_provider = nil
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (m *AppSettingMutation) SetUpdatedAt(t time.Time) {
 	m.updated_at = &t
@@ -253,9 +290,12 @@ func (m *AppSettingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *AppSettingMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
 	if m.timezone != nil {
 		fields = append(fields, appsetting.FieldTimezone)
+	}
+	if m.llm_provider != nil {
+		fields = append(fields, appsetting.FieldLlmProvider)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, appsetting.FieldUpdatedAt)
@@ -270,6 +310,8 @@ func (m *AppSettingMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case appsetting.FieldTimezone:
 		return m.Timezone()
+	case appsetting.FieldLlmProvider:
+		return m.LlmProvider()
 	case appsetting.FieldUpdatedAt:
 		return m.UpdatedAt()
 	}
@@ -283,6 +325,8 @@ func (m *AppSettingMutation) OldField(ctx context.Context, name string) (ent.Val
 	switch name {
 	case appsetting.FieldTimezone:
 		return m.OldTimezone(ctx)
+	case appsetting.FieldLlmProvider:
+		return m.OldLlmProvider(ctx)
 	case appsetting.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
 	}
@@ -300,6 +344,13 @@ func (m *AppSettingMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTimezone(v)
+		return nil
+	case appsetting.FieldLlmProvider:
+		v, ok := value.(appsetting.LlmProvider)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLlmProvider(v)
 		return nil
 	case appsetting.FieldUpdatedAt:
 		v, ok := value.(time.Time)
@@ -359,6 +410,9 @@ func (m *AppSettingMutation) ResetField(name string) error {
 	switch name {
 	case appsetting.FieldTimezone:
 		m.ResetTimezone()
+		return nil
+	case appsetting.FieldLlmProvider:
+		m.ResetLlmProvider()
 		return nil
 	case appsetting.FieldUpdatedAt:
 		m.ResetUpdatedAt()

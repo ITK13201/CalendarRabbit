@@ -4,6 +4,7 @@ import type {
   ConversationResponse,
   EventInput,
   EventProposal,
+  LLMProvider,
   SendMessageResponse,
 } from './types'
 
@@ -84,10 +85,10 @@ export const api = {
   getSettings(): Promise<AppSettings> {
     return request<AppSettings>('/settings')
   },
-  updateSettings(timezone: string): Promise<AppSettings> {
+  updateSettings(timezone: string, llmProvider: LLMProvider): Promise<AppSettings> {
     return request<AppSettings>('/settings', {
       method: 'PUT',
-      body: JSON.stringify({ timezone }),
+      body: JSON.stringify({ timezone, llm_provider: llmProvider }),
     })
   },
 }

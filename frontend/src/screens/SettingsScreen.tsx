@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import type { LLMProvider } from '../api/types'
 
 // 代表的なタイムゾーン候補（必要に応じて拡張可能）。
 const TIMEZONES = [
@@ -14,8 +15,15 @@ const TIMEZONES = [
   'Australia/Sydney',
 ]
 
+// LLM プロバイダの選択肢（既定は deepseek）。
+const LLM_PROVIDERS: { value: LLMProvider; label: string }[] = [
+  { value: 'deepseek', label: 'DeepSeek（既定・低コスト）' },
+  { value: 'claude', label: 'Claude（高精度・ネイティブweb検索）' },
+]
+
 export function SettingsScreen() {
   const [timezone, setTimezone] = useState('Asia/Tokyo')
+  const [llmProvider, setLlmProvider] = useState<LLMProvider>('deepseek')
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -26,6 +34,7 @@ export function SettingsScreen() {
       .getSettings()
       .then((s) => {
         setTimezone(s.timezone)
+        setLlmProvider(s.llm_provider)
         setLoaded(true)
       })
       .catch((e) => setError(String(e)))
@@ -36,8 +45,9 @@ export function SettingsScreen() {
     setError(null)
     setNotice(null)
     try {
-      const updated = await api.updateSettings(timezone)
+      const updated = await api.updateSettings(timezone, llmProvider)
       setTimezone(updated.timezone)
+      setLlmProvider(updated.llm_provider)
       setNotice('設定を保存しました')
     } catch (e) {
       setError(String(e))
@@ -60,6 +70,21 @@ export function SettingsScreen() {
           {options.map((tz) => (
             <option key={tz} value={tz}>
               {tz}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="field">
+        <span>予定抽出に使うLLM</span>
+        <select
+          value={llmProvider}
+          onChange={(e) => setLlmProvider(e.target.value as LLMProvider)}
+          disabled={!loaded}
+        >
+          {LLM_PROVIDERS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label}
             </option>
           ))}
         </select>
