@@ -26,7 +26,7 @@ func init() {
 	// appsetting.TimezoneValidator is a validator for the "timezone" field. It is called by the builders before save.
 	appsetting.TimezoneValidator = appsettingDescTimezone.Validators[0].(func(string) error)
 	// appsettingDescUpdatedAt is the schema descriptor for updated_at field.
-	appsettingDescUpdatedAt := appsettingFields[1].Descriptor()
+	appsettingDescUpdatedAt := appsettingFields[2].Descriptor()
 	// appsetting.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	appsetting.DefaultUpdatedAt = appsettingDescUpdatedAt.Default.(func() time.Time)
 	// appsetting.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

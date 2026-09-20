@@ -32,7 +32,18 @@ services:
       DB_USER: ${DB_USER:-calendarrabbit}
       DB_PASSWORD: ${DB_PASSWORD:-calendarrabbit}
       DB_NAME: ${DB_NAME:-calendarrabbit}
-      CLAUDE_API_KEY: ${CLAUDE_API_KEY:?CLAUDE_API_KEY is required (op run --env-file=.env.op ...)}
+      # LLM プロバイダ選択（deepseek 既定 / claude 切り戻し）。
+      LLM_PROVIDER: ${LLM_PROVIDER:-deepseek}
+      # DeepSeek（既定プロバイダ）。API キーは 1Password から注入必須。
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?DEEPSEEK_API_KEY is required (op run --env-file=.env.op ...)}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-v4-pro}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      # web 検索 API（DeepSeek 経路の事前検索用）。API キーは 1Password から注入必須。
+      SEARCH_PROVIDER: ${SEARCH_PROVIDER:-tavily}
+      SEARCH_API_KEY: ${SEARCH_API_KEY:?SEARCH_API_KEY is required (op run --env-file=.env.op ...)}
+      SEARCH_MAX_RESULTS: ${SEARCH_MAX_RESULTS:-10}
+      # Claude は切り戻し用。既定はダミー（LLM_PROVIDER=claude 時のみ実キーを注入）。
+      CLAUDE_API_KEY: ${CLAUDE_API_KEY:-dummy-claude-api-key}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8081}
     ports:

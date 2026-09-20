@@ -42,6 +42,20 @@ func (_u *AppSettingUpdate) SetNillableTimezone(v *string) *AppSettingUpdate {
 	return _u
 }
 
+// SetLlmProvider sets the "llm_provider" field.
+func (_u *AppSettingUpdate) SetLlmProvider(v appsetting.LlmProvider) *AppSettingUpdate {
+	_u.mutation.SetLlmProvider(v)
+	return _u
+}
+
+// SetNillableLlmProvider sets the "llm_provider" field if the given value is not nil.
+func (_u *AppSettingUpdate) SetNillableLlmProvider(v *appsetting.LlmProvider) *AppSettingUpdate {
+	if v != nil {
+		_u.SetLlmProvider(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *AppSettingUpdate) SetUpdatedAt(v time.Time) *AppSettingUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -96,6 +110,11 @@ func (_u *AppSettingUpdate) check() error {
 			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "AppSetting.timezone": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LlmProvider(); ok {
+		if err := appsetting.LlmProviderValidator(v); err != nil {
+			return &ValidationError{Name: "llm_provider", err: fmt.Errorf(`ent: validator failed for field "AppSetting.llm_provider": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -113,6 +132,9 @@ func (_u *AppSettingUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.Timezone(); ok {
 		_spec.SetField(appsetting.FieldTimezone, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.LlmProvider(); ok {
+		_spec.SetField(appsetting.FieldLlmProvider, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(appsetting.FieldUpdatedAt, field.TypeTime, value)
@@ -147,6 +169,20 @@ func (_u *AppSettingUpdateOne) SetTimezone(v string) *AppSettingUpdateOne {
 func (_u *AppSettingUpdateOne) SetNillableTimezone(v *string) *AppSettingUpdateOne {
 	if v != nil {
 		_u.SetTimezone(*v)
+	}
+	return _u
+}
+
+// SetLlmProvider sets the "llm_provider" field.
+func (_u *AppSettingUpdateOne) SetLlmProvider(v appsetting.LlmProvider) *AppSettingUpdateOne {
+	_u.mutation.SetLlmProvider(v)
+	return _u
+}
+
+// SetNillableLlmProvider sets the "llm_provider" field if the given value is not nil.
+func (_u *AppSettingUpdateOne) SetNillableLlmProvider(v *appsetting.LlmProvider) *AppSettingUpdateOne {
+	if v != nil {
+		_u.SetLlmProvider(*v)
 	}
 	return _u
 }
@@ -218,6 +254,11 @@ func (_u *AppSettingUpdateOne) check() error {
 			return &ValidationError{Name: "timezone", err: fmt.Errorf(`ent: validator failed for field "AppSetting.timezone": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.LlmProvider(); ok {
+		if err := appsetting.LlmProviderValidator(v); err != nil {
+			return &ValidationError{Name: "llm_provider", err: fmt.Errorf(`ent: validator failed for field "AppSetting.llm_provider": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -252,6 +293,9 @@ func (_u *AppSettingUpdateOne) sqlSave(ctx context.Context) (_node *AppSetting, 
 	}
 	if value, ok := _u.mutation.Timezone(); ok {
 		_spec.SetField(appsetting.FieldTimezone, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.LlmProvider(); ok {
+		_spec.SetField(appsetting.FieldLlmProvider, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(appsetting.FieldUpdatedAt, field.TypeTime, value)

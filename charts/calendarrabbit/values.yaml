@@ -11,7 +11,15 @@ backend:
   replicas: 1
   port: 8080
   env:
+    # LLM プロバイダ選択（deepseek 既定 / claude 切り戻し）。
+    llmProvider: deepseek
     claudeModel: claude-sonnet-4-6
+    # DeepSeek（OpenAI 互換 API）設定。
+    deepseekModel: deepseek-v4-pro
+    deepseekBaseURL: https://api.deepseek.com
+    # web 検索 API 設定（DeepSeek 経路の事前検索用）。
+    searchProvider: tavily
+    searchMaxResults: 10
     allowedOrigins: "*"
   resources:
     requests:
@@ -23,8 +31,11 @@ backend:
   # backend の機密情報。既存 Secret を使う場合は existingSecret を指定。
   secret:
     existingSecret: ""
-    # VPN 前提のため既定はダミー。必ず --set backend.secret.claudeApiKey=... で上書きする。
+    # VPN 前提のため既定はダミー。実運用では必ず --set で上書きする。
+    # deepseek 経路では deepseekApiKey / searchApiKey を、claude 経路では claudeApiKey を設定する。
     claudeApiKey: "dummy-claude-api-key"
+    deepseekApiKey: "dummy-deepseek-api-key"
+    searchApiKey: "dummy-search-api-key"
 
 frontend:
   image:

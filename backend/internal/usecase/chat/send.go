@@ -37,7 +37,7 @@ func (u *UseCase) SendMessage(ctx context.Context, content string) (*SendResult,
 		return nil, err
 	}
 
-	extraction, err := u.extractor.Extract(ctx, history, content)
+	extraction, err := u.resolveExtractor(ctx).Extract(ctx, history, content)
 	if err != nil {
 		return nil, err
 	}

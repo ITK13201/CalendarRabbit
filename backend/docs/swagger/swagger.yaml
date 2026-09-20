@@ -140,11 +140,15 @@ definitions:
     type: object
   handler.settingsRequest:
     properties:
+      llm_provider:
+        type: string
       timezone:
         type: string
     type: object
   handler.settingsResponse:
     properties:
+      llm_provider:
+        type: string
       timezone:
         type: string
       updated_at:
@@ -280,6 +284,17 @@ paths:
       tags:
       - calendar
   /api/chat/conversations:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: 会話履歴をクリアする（全メッセージ・予定案を削除）
+      tags:
+      - chat
     get:
       produces:
       - application/json

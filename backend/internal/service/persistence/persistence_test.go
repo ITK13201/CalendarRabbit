@@ -105,18 +105,21 @@ func TestAppSettingRepository_UpsertAndGet(t *testing.T) {
 	_, err := repo.Get(ctx)
 	assert.ErrorIs(t, err, derr.ErrNotFound)
 
-	created, err := repo.Upsert(ctx, "Asia/Tokyo")
+	created, err := repo.Upsert(ctx, persistence.AppSettingInput{Timezone: "Asia/Tokyo", LLMProvider: "deepseek"})
 	require.NoError(t, err)
 	assert.Equal(t, "Asia/Tokyo", created.Timezone)
+	assert.Equal(t, "deepseek", created.LLMProvider)
 
-	updated, err := repo.Upsert(ctx, "UTC")
+	updated, err := repo.Upsert(ctx, persistence.AppSettingInput{Timezone: "UTC", LLMProvider: "claude"})
 	require.NoError(t, err)
 	assert.Equal(t, "UTC", updated.Timezone)
+	assert.Equal(t, "claude", updated.LLMProvider)
 	assert.Equal(t, created.ID, updated.ID, "single-record: same row is updated")
 
 	got, err := repo.Get(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "UTC", got.Timezone)
+	assert.Equal(t, "claude", got.LLMProvider)
 }
 
 func TestConversationAndMessageRepository(t *testing.T) {

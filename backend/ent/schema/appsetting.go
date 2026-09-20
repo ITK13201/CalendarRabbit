@@ -17,6 +17,10 @@ func (AppSetting) Fields() []ent.Field {
 		field.String("timezone").
 			Default("Asia/Tokyo").
 			NotEmpty(),
+		// llm_provider は使用する LLM プロバイダ（"deepseek" | "claude"）。既定は deepseek。
+		field.Enum("llm_provider").
+			Values("deepseek", "claude").
+			Default("deepseek"),
 		field.Time("updated_at").
 			Default(time.Now).
 			UpdateDefault(time.Now),

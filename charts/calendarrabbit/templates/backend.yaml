@@ -38,6 +38,16 @@ spec:
               value: {{ .Values.mysql.database | quote }}
             - name: CLAUDE_MODEL
               value: {{ .Values.backend.env.claudeModel | quote }}
+            - name: LLM_PROVIDER
+              value: {{ .Values.backend.env.llmProvider | quote }}
+            - name: DEEPSEEK_MODEL
+              value: {{ .Values.backend.env.deepseekModel | quote }}
+            - name: DEEPSEEK_BASE_URL
+              value: {{ .Values.backend.env.deepseekBaseURL | quote }}
+            - name: SEARCH_PROVIDER
+              value: {{ .Values.backend.env.searchProvider | quote }}
+            - name: SEARCH_MAX_RESULTS
+              value: {{ .Values.backend.env.searchMaxResults | quote }}
             - name: ALLOWED_ORIGINS
               value: {{ .Values.backend.env.allowedOrigins | quote }}
             - name: DB_PASSWORD
@@ -50,6 +60,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "calendarrabbit.backendSecretName" . }}
                   key: CLAUDE_API_KEY
+            - name: DEEPSEEK_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
+                  key: DEEPSEEK_API_KEY
+            - name: SEARCH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
+                  key: SEARCH_API_KEY
           readinessProbe:
             httpGet:
               path: /api/health

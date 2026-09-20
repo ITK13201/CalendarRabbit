@@ -129,6 +129,26 @@ func TimezoneContainsFold(v string) predicate.AppSetting {
 	return predicate.AppSetting(sql.FieldContainsFold(FieldTimezone, v))
 }
 
+// LlmProviderEQ applies the EQ predicate on the "llm_provider" field.
+func LlmProviderEQ(v LlmProvider) predicate.AppSetting {
+	return predicate.AppSetting(sql.FieldEQ(FieldLlmProvider, v))
+}
+
+// LlmProviderNEQ applies the NEQ predicate on the "llm_provider" field.
+func LlmProviderNEQ(v LlmProvider) predicate.AppSetting {
+	return predicate.AppSetting(sql.FieldNEQ(FieldLlmProvider, v))
+}
+
+// LlmProviderIn applies the In predicate on the "llm_provider" field.
+func LlmProviderIn(vs ...LlmProvider) predicate.AppSetting {
+	return predicate.AppSetting(sql.FieldIn(FieldLlmProvider, vs...))
+}
+
+// LlmProviderNotIn applies the NotIn predicate on the "llm_provider" field.
+func LlmProviderNotIn(vs ...LlmProvider) predicate.AppSetting {
+	return predicate.AppSetting(sql.FieldNotIn(FieldLlmProvider, vs...))
+}
+
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
 func UpdatedAtEQ(v time.Time) predicate.AppSetting {
 	return predicate.AppSetting(sql.FieldEQ(FieldUpdatedAt, v))

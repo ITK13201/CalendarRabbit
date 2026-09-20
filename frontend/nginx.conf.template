@@ -12,6 +12,11 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # DeepSeek（reasoning 系）は 1 応答に数十秒かかり、not_found 時は再検索で
+        # LLM を 2 回呼ぶため、既定 60s では途中で切断される。十分な余裕を確保する。
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 180s;
+        proxy_read_timeout 180s;
     }
 
     # Swagger UI もバックエンドへ

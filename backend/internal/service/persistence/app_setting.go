@@ -9,6 +9,12 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
 )
 
+// AppSettingInput は設定の作成／更新に用いる入力。
+type AppSettingInput struct {
+	Timezone    string
+	LLMProvider string
+}
+
 // AppSettingRepository は AppSetting（単一レコード）の永続化を担う。
 // 単一ユーザー・単一カレンダー前提のため、常に最古の1レコードを設定として扱う。
 type AppSettingRepository struct {
@@ -34,7 +40,8 @@ func (r *AppSettingRepository) Get(ctx context.Context) (*entity.AppSetting, err
 }
 
 // Upsert は設定レコードを作成または更新する。
-func (r *AppSettingRepository) Upsert(ctx context.Context, timezone string) (*entity.AppSetting, error) {
+func (r *AppSettingRepository) Upsert(ctx context.Context, in AppSettingInput) (*entity.AppSetting, error) {
+	provider := appsetting.LlmProvider(in.LLMProvider)
 	existing, err := r.client.AppSetting.Query().
 		Order(ent.Asc(appsetting.FieldID)).
 		First(ctx)
@@ -43,7 +50,8 @@ func (r *AppSettingRepository) Upsert(ctx context.Context, timezone string) (*en
 			return nil, err
 		}
 		created, cerr := r.client.AppSetting.Create().
-			SetTimezone(timezone).
+			SetTimezone(in.Timezone).
+			SetLlmProvider(provider).
 			Save(ctx)
 		if cerr != nil {
 			return nil, cerr
@@ -51,7 +59,8 @@ func (r *AppSettingRepository) Upsert(ctx context.Context, timezone string) (*en
 		return mapAppSetting(created), nil
 	}
 	updated, err := r.client.AppSetting.UpdateOneID(existing.ID).
-		SetTimezone(timezone).
+		SetTimezone(in.Timezone).
+		SetLlmProvider(provider).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -61,8 +70,9 @@ func (r *AppSettingRepository) Upsert(ctx context.Context, timezone string) (*en
 
 func mapAppSetting(row *ent.AppSetting) *entity.AppSetting {
 	return &entity.AppSetting{
-		ID:        row.ID,
-		Timezone:  row.Timezone,
-		UpdatedAt: row.UpdatedAt.UTC(),
+		ID:          row.ID,
+		Timezone:    row.Timezone,
+		LLMProvider: string(row.LlmProvider),
+		UpdatedAt:   row.UpdatedAt.UTC(),
 	}
 }

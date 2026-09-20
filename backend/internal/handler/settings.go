@@ -11,20 +11,22 @@ import (
 // SettingsUseCase は設定ハンドラが依存するユースケース。
 type SettingsUseCase interface {
 	Get(ctx context.Context) (*entity.AppSetting, error)
-	Update(ctx context.Context, timezone string) (*entity.AppSetting, error)
+	Update(ctx context.Context, timezone, llmProvider string) (*entity.AppSetting, error)
 }
 
 type settingsRequest struct {
-	Timezone string `json:"timezone"`
+	Timezone    string `json:"timezone"`
+	LLMProvider string `json:"llm_provider"`
 }
 
 type settingsResponse struct {
-	Timezone  string `json:"timezone"`
-	UpdatedAt string `json:"updated_at,omitempty"`
+	Timezone    string `json:"timezone"`
+	LLMProvider string `json:"llm_provider"`
+	UpdatedAt   string `json:"updated_at,omitempty"`
 }
 
 func toSettingsResponse(s *entity.AppSetting) settingsResponse {
-	resp := settingsResponse{Timezone: s.Timezone}
+	resp := settingsResponse{Timezone: s.Timezone, LLMProvider: s.LLMProvider}
 	if !s.UpdatedAt.IsZero() {
 		resp.UpdatedAt = s.UpdatedAt.UTC().Format(timeRFC3339)
 	}
@@ -61,7 +63,7 @@ func (h *Handler) UpdateSettings(c *gin.Context) {
 		respondError(c, badRequest("body", "invalid request body"))
 		return
 	}
-	s, err := h.settings.Update(c.Request.Context(), req.Timezone)
+	s, err := h.settings.Update(c.Request.Context(), req.Timezone, req.LLMProvider)
 	if err != nil {
 		respondError(c, err)
 		return

@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Calendar, dateFnsLocalizer, type View } from 'react-big-calendar'
-import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth } from 'date-fns'
+import {
+  format,
+  parse,
+  startOfWeek,
+  endOfWeek,
+  getDay,
+  startOfMonth,
+  endOfMonth,
+  addDays,
+} from 'date-fns'
 import { ja } from 'date-fns/locale'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { api } from '../api/client'
@@ -30,8 +39,10 @@ export function CalendarScreen() {
 
   const load = useCallback(async (date: Date) => {
     try {
-      const from = startOfMonth(date)
-      const to = endOfMonth(date)
+      // 月ビューは前後の月の日も表示するため、表示グリッド全体（週境界まで）を取得範囲にする。
+      // これにより月跨ぎ・グリッド端の予定も欠けずに取得できる。
+      const from = startOfWeek(startOfMonth(date), { weekStartsOn: 0 })
+      const to = endOfWeek(endOfMonth(date), { weekStartsOn: 0 })
       const list = await api.listEvents(from, to)
       setEvents(list)
       setError(null)
@@ -50,7 +61,9 @@ export function CalendarScreen() {
         id: e.id,
         title: e.title,
         start: new Date(e.starts_at),
-        end: new Date(e.ends_at),
+        // react-big-calendar は終日イベントの end を排他的に扱うため、
+        // 包括的に保持している ends_at（最終日）に +1 日して最終日まで描画させる。
+        end: e.all_day ? addDays(new Date(e.ends_at), 1) : new Date(e.ends_at),
         allDay: e.all_day,
         resource: e,
       })),

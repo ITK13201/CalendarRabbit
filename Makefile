@@ -7,8 +7,9 @@ ENV_FILE := .env.op
 COMPOSE  := docker compose
 # 秘密を 1Password から注入して compose を実行
 OP       := op run --env-file=$(ENV_FILE) --
-# compose ファイルの必須変数(${CLAUDE_API_KEY:?})を満たすためのダミー（値は不問の操作用）
-DUMMY    := CLAUDE_API_KEY=dummy
+# compose ファイルの必須変数(${DEEPSEEK_API_KEY:?}, ${SEARCH_API_KEY:?})を満たすためのダミー（値は不問の操作用）
+# CLAUDE_API_KEY は現状 compose 側で任意だが、切り戻し時の必須化にも備えてダミーを同梱する。
+DUMMY    := DEEPSEEK_API_KEY=dummy SEARCH_API_KEY=dummy CLAUDE_API_KEY=dummy
 
 BACKEND_URL  := http://localhost:8080
 FRONTEND_URL := http://localhost:8081
@@ -81,10 +82,14 @@ logs-mysql: ## mysql ログ追従
 
 .PHONY: check-op
 check-op: ## 1Password 参照が解決できるか確認（秘密はマスク）
-	@echo "CLAUDE_MODEL   = $$(op read 'op://Development/CalendarRabbit/CLAUDE_MODEL')"
-	@echo "DB_USER        = $$(op read 'op://Development/CalendarRabbit/DB_USER')"
-	@echo "DB_NAME        = $$(op read 'op://Development/CalendarRabbit/DB_NAME')"
-	@echo "CLAUDE_API_KEY = $$(op read 'op://Development/CalendarRabbit/CLAUDE_API_KEY' | sed 's/./*/g')"
+	@echo "LLM_PROVIDER     = $$(op read 'op://Development/CalendarRabbit/LLM_PROVIDER')"
+	@echo "DEEPSEEK_MODEL   = $$(op read 'op://Development/CalendarRabbit/DEEPSEEK_MODEL')"
+	@echo "SEARCH_PROVIDER  = $$(op read 'op://Development/CalendarRabbit/SEARCH_PROVIDER')"
+	@echo "DB_USER          = $$(op read 'op://Development/CalendarRabbit/DB_USER')"
+	@echo "DB_NAME          = $$(op read 'op://Development/CalendarRabbit/DB_NAME')"
+	@echo "DEEPSEEK_API_KEY = $$(op read 'op://Development/CalendarRabbit/DEEPSEEK_API_KEY' | sed 's/./*/g')"
+	@echo "SEARCH_API_KEY   = $$(op read 'op://Development/CalendarRabbit/SEARCH_API_KEY' | sed 's/./*/g')"
+	@echo "CLAUDE_API_KEY   = $$(op read 'op://Development/CalendarRabbit/CLAUDE_API_KEY' | sed 's/./*/g')"
 
 .PHONY: mysql
 mysql: ## MySQL に接続（コンテナ内 mysql クライアント）
@@ -105,8 +110,8 @@ swagger: ## Swagger UI の URL を表示
 
 .PHONY: e2e
 e2e: ## E2Eデバッグ: チャット送信→予定案IDを表示（承認は approve PROPOSAL=<id>）
-	@echo ">>> POST /api/chat/messages (実 Claude 呼び出し)"; \
-	curl -s --max-time 120 -X POST $(BACKEND_URL)/api/chat/messages \
+	@echo ">>> POST /api/chat/messages (実 LLM 呼び出し)"; \
+	curl -s --max-time 180 -X POST $(BACKEND_URL)/api/chat/messages \
 		-H 'Content-Type: application/json' \
 		-d '{"content":"TGSの予定を追加して"}' | python3 -m json.tool
 

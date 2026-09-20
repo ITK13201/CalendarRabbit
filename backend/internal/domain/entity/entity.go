@@ -71,7 +71,8 @@ type CalendarEvent struct {
 
 // AppSetting はアプリ設定（単一レコード）。
 type AppSetting struct {
-	ID        int
-	Timezone  string
-	UpdatedAt time.Time
+	ID          int
+	Timezone    string
+	LLMProvider string
+	UpdatedAt   time.Time
 }

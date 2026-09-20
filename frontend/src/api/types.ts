@@ -72,8 +72,11 @@ export interface ConversationResponse {
   proposals: EventProposal[]
 }
 
+export type LLMProvider = 'deepseek' | 'claude'
+
 export interface AppSettings {
   timezone: string
+  llm_provider: LLMProvider
   updated_at?: string
 }
 

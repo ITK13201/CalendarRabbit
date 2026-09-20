@@ -12,6 +12,7 @@ var (
 	AppSettingsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "timezone", Type: field.TypeString, Default: "Asia/Tokyo"},
+		{Name: "llm_provider", Type: field.TypeEnum, Enums: []string{"deepseek", "claude"}, Default: "deepseek"},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
 	// AppSettingsTable holds the schema information for the "app_settings" table.

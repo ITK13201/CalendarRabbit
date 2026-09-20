@@ -3,6 +3,7 @@
 package chat
 
 import (
+	"context"
 	"log/slog"
 	"time"
 
@@ -11,16 +12,46 @@ import (
 	chatservice "github.com/ITK13201/CalendarRabbit/backend/internal/service/chat"
 )
 
-// UseCase はチャット予定登録フローのユースケース。
-type UseCase struct {
-	client    *ent.Client
-	extractor chatservice.Extractor
-	logger    *slog.Logger
+// SettingsReader は現在のアプリ設定（選択中の LLM プロバイダ）を読み取る。
+type SettingsReader interface {
+	Get(ctx context.Context) (*entity.AppSetting, error)
 }
 
-// New は UseCase を生成する。
-func New(client *ent.Client, extractor chatservice.Extractor, logger *slog.Logger) *UseCase {
-	return &UseCase{client: client, extractor: extractor, logger: logger}
+// UseCase はチャット予定登録フローのユースケース。
+type UseCase struct {
+	client *ent.Client
+	// extractors はプロバイダ名 -> Extractor のマップ（設定に応じて実行時に選択）。
+	extractors      map[string]chatservice.Extractor
+	settings        SettingsReader
+	defaultProvider string
+	logger          *slog.Logger
+}
+
+// New は UseCase を生成する。extractors は利用可能な各プロバイダの Extractor、
+// settings は選択中プロバイダの読み取り元、defaultProvider は設定不明時のフォールバック。
+func New(client *ent.Client, extractors map[string]chatservice.Extractor, settings SettingsReader, defaultProvider string, logger *slog.Logger) *UseCase {
+	return &UseCase{
+		client:          client,
+		extractors:      extractors,
+		settings:        settings,
+		defaultProvider: defaultProvider,
+		logger:          logger,
+	}
+}
+
+// resolveExtractor は設定に応じた Extractor を返す。設定取得や該当プロバイダが無い場合は
+// defaultProvider のものへフォールバックする。
+func (u *UseCase) resolveExtractor(ctx context.Context) chatservice.Extractor {
+	provider := u.defaultProvider
+	if u.settings != nil {
+		if s, err := u.settings.Get(ctx); err == nil && s.LLMProvider != "" {
+			provider = s.LLMProvider
+		}
+	}
+	if ex, ok := u.extractors[provider]; ok {
+		return ex
+	}
+	return u.extractors[u.defaultProvider]
 }
 
 // SendResult はメッセージ送信の結果。

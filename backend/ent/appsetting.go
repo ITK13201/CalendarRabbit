@@ -19,6 +19,8 @@ type AppSetting struct {
 	ID int `json:"id,omitempty"`
 	// Timezone holds the value of the "timezone" field.
 	Timezone string `json:"timezone,omitempty"`
+	// LlmProvider holds the value of the "llm_provider" field.
+	LlmProvider appsetting.LlmProvider `json:"llm_provider,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	selectValues sql.SelectValues
@@ -31,7 +33,7 @@ func (*AppSetting) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case appsetting.FieldID:
 			values[i] = new(sql.NullInt64)
-		case appsetting.FieldTimezone:
+		case appsetting.FieldTimezone, appsetting.FieldLlmProvider:
 			values[i] = new(sql.NullString)
 		case appsetting.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -61,6 +63,12 @@ func (_m *AppSetting) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field timezone", values[i])
 			} else if value.Valid {
 				_m.Timezone = value.String
+			}
+		case appsetting.FieldLlmProvider:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field llm_provider", values[i])
+			} else if value.Valid {
+				_m.LlmProvider = appsetting.LlmProvider(value.String)
 			}
 		case appsetting.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -106,6 +114,9 @@ func (_m *AppSetting) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("timezone=")
 	builder.WriteString(_m.Timezone)
+	builder.WriteString(", ")
+	builder.WriteString("llm_provider=")
+	builder.WriteString(fmt.Sprintf("%v", _m.LlmProvider))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))

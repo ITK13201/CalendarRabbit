@@ -2,9 +2,11 @@ package chat_test
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
+	"github.com/ITK13201/CalendarRabbit/backend/ent"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
 	chatservice "github.com/ITK13201/CalendarRabbit/backend/internal/service/chat"
@@ -14,6 +16,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// newTestUC は単一の Extractor を既定プロバイダに割り当てて UseCase を構築するテストヘルパ。
+// 設定リーダは nil のため、常に defaultProvider(deepseek) の Extractor が使われる。
+func newTestUC(client *ent.Client, ext chatservice.Extractor, logger *slog.Logger) *chat.UseCase {
+	return chat.New(client, map[string]chatservice.Extractor{"deepseek": ext}, nil, "deepseek", logger)
+}
 
 // mockExtractor は chatservice.Extractor のモック。
 type mockExtractor struct {
@@ -52,7 +60,7 @@ func eventResult() *chatservice.ExtractionResult {
 
 func TestSendMessage_EventCreatesPendingProposalNotRegistered(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	res, err := uc.SendMessage(ctx, "TGSの予定を追加して")
@@ -77,7 +85,7 @@ func TestSendMessage_EventCreatesPendingProposalNotRegistered(t *testing.T) {
 
 func TestSendMessage_OffTopicNoProposal(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: &chatservice.ExtractionResult{
+	uc := newTestUC(client, &mockExtractor{result: &chatservice.ExtractionResult{
 		Status: chatservice.StatusOffTopic, Message: "予定登録専用です",
 	}}, nil)
 
@@ -89,7 +97,7 @@ func TestSendMessage_OffTopicNoProposal(t *testing.T) {
 
 func TestSendMessage_NotFoundNoProposal(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: &chatservice.ExtractionResult{
+	uc := newTestUC(client, &mockExtractor{result: &chatservice.ExtractionResult{
 		Status: chatservice.StatusNotFound, Message: "特定できません。追加情報をください",
 	}}, nil)
 
@@ -101,7 +109,7 @@ func TestSendMessage_NotFoundNoProposal(t *testing.T) {
 func TestSendMessage_MultipleCandidates(t *testing.T) {
 	client := testsupport.NewClient(t)
 	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	uc := chat.New(client, &mockExtractor{result: &chatservice.ExtractionResult{
+	uc := newTestUC(client, &mockExtractor{result: &chatservice.ExtractionResult{
 		Status:  chatservice.StatusMultiple,
 		Message: "候補が複数あります",
 		Candidates: []chatservice.ExtractedEvent{
@@ -119,7 +127,7 @@ func TestSendMessage_MultipleCandidates(t *testing.T) {
 
 func TestApproveProposal_RegistersEvent(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	sent, err := uc.SendMessage(ctx, "TGSを追加")
@@ -144,7 +152,7 @@ func TestApproveProposal_RegistersEvent(t *testing.T) {
 
 func TestApproveProposal_WithEdit(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	sent, err := uc.SendMessage(ctx, "TGSを追加")
@@ -165,7 +173,7 @@ func TestApproveProposal_WithEdit(t *testing.T) {
 
 func TestApproveProposal_InvalidEdit(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	sent, err := uc.SendMessage(ctx, "TGSを追加")
@@ -182,7 +190,7 @@ func TestApproveProposal_InvalidEdit(t *testing.T) {
 
 func TestApproveProposal_AlreadyProcessed(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	sent, err := uc.SendMessage(ctx, "TGSを追加")
@@ -201,7 +209,7 @@ func TestApproveProposal_AlreadyProcessed(t *testing.T) {
 
 func TestRejectProposal(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	sent, err := uc.SendMessage(ctx, "TGSを追加")
@@ -223,7 +231,7 @@ func TestRejectProposal(t *testing.T) {
 
 func TestApproveProposal_NotFound(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	_, err := uc.ApproveProposal(context.Background(), 999999, nil)
 	assert.ErrorIs(t, err, derr.ErrNotFound)
 }
@@ -233,7 +241,7 @@ func TestSendMessage_HistoryTruncatedToRecentTurns(t *testing.T) {
 	ext := &capturingExtractor{result: &chatservice.ExtractionResult{
 		Status: chatservice.StatusNotFound, Message: "ok",
 	}}
-	uc := chat.New(client, ext, nil)
+	uc := newTestUC(client, ext, nil)
 	ctx := context.Background()
 
 	// maxHistoryTurns=10。各送信で user+assistant の2件が永続化される。
@@ -251,7 +259,7 @@ func TestSendMessage_HistoryWithinLimitReturnsAll(t *testing.T) {
 	ext := &capturingExtractor{result: &chatservice.ExtractionResult{
 		Status: chatservice.StatusNotFound, Message: "ok",
 	}}
-	uc := chat.New(client, ext, nil)
+	uc := newTestUC(client, ext, nil)
 	ctx := context.Background()
 
 	// 2回送信 → 3回目送信前の履歴は4件（上限10以内）なので全件渡す。
@@ -266,7 +274,7 @@ func TestSendMessage_HistoryWithinLimitReturnsAll(t *testing.T) {
 
 func TestClearConversation_RemovesMessagesAndProposals(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	_, err := uc.SendMessage(ctx, "TGSを追加")
@@ -289,7 +297,7 @@ func TestClearConversation_RemovesMessagesAndProposals(t *testing.T) {
 
 func TestGetConversation_History(t *testing.T) {
 	client := testsupport.NewClient(t)
-	uc := chat.New(client, &mockExtractor{result: eventResult()}, nil)
+	uc := newTestUC(client, &mockExtractor{result: eventResult()}, nil)
 	ctx := context.Background()
 
 	_, err := uc.SendMessage(ctx, "TGSを追加")

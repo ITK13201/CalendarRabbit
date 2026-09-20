@@ -3,6 +3,7 @@
 package appsetting
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -15,6 +16,8 @@ const (
 	FieldID = "id"
 	// FieldTimezone holds the string denoting the timezone field in the database.
 	FieldTimezone = "timezone"
+	// FieldLlmProvider holds the string denoting the llm_provider field in the database.
+	FieldLlmProvider = "llm_provider"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
 	// Table holds the table name of the appsetting in the database.
@@ -25,6 +28,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldTimezone,
+	FieldLlmProvider,
 	FieldUpdatedAt,
 }
 
@@ -49,6 +53,32 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 )
 
+// LlmProvider defines the type for the "llm_provider" enum field.
+type LlmProvider string
+
+// LlmProviderDeepseek is the default value of the LlmProvider enum.
+const DefaultLlmProvider = LlmProviderDeepseek
+
+// LlmProvider values.
+const (
+	LlmProviderDeepseek LlmProvider = "deepseek"
+	LlmProviderClaude   LlmProvider = "claude"
+)
+
+func (lp LlmProvider) String() string {
+	return string(lp)
+}
+
+// LlmProviderValidator is a validator for the "llm_provider" field enum values. It is called by the builders before save.
+func LlmProviderValidator(lp LlmProvider) error {
+	switch lp {
+	case LlmProviderDeepseek, LlmProviderClaude:
+		return nil
+	default:
+		return fmt.Errorf("appsetting: invalid enum value for llm_provider field: %q", lp)
+	}
+}
+
 // OrderOption defines the ordering options for the AppSetting queries.
 type OrderOption func(*sql.Selector)
 
@@ -60,6 +90,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByTimezone orders the results by the timezone field.
 func ByTimezone(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTimezone, opts...).ToFunc()
+}
+
+// ByLlmProvider orders the results by the llm_provider field.
+func ByLlmProvider(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLlmProvider, opts...).ToFunc()
 }
 
 // ByUpdatedAt orders the results by the updated_at field.
