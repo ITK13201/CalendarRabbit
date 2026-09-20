@@ -6,6 +6,7 @@ import {
   startOfWeek,
   endOfWeek,
   getDay,
+  startOfDay,
   startOfMonth,
   endOfMonth,
   addDays,
@@ -60,10 +61,12 @@ export function CalendarScreen() {
       events.map((e) => ({
         id: e.id,
         title: e.title,
-        start: new Date(e.starts_at),
-        // react-big-calendar は終日イベントの end を排他的に扱うため、
-        // 包括的に保持している ends_at（最終日）に +1 日して最終日まで描画させる。
-        end: e.all_day ? addDays(new Date(e.ends_at), 1) : new Date(e.ends_at),
+        // 終日は日付のみで扱う（時刻成分でのズレを防ぐため 0 時に正規化）。
+        start: e.all_day ? startOfDay(new Date(e.starts_at)) : new Date(e.starts_at),
+        // react-big-calendar は終日イベントの end を排他的に扱う。ends_at は最終日を
+        // 包括的に保持している（末尾時刻を含む場合もある）ため、最終日の 0 時へ正規化して
+        // から +1 日し、最終日まで正しく描画させる。
+        end: e.all_day ? addDays(startOfDay(new Date(e.ends_at)), 1) : new Date(e.ends_at),
         allDay: e.all_day,
         resource: e,
       })),
