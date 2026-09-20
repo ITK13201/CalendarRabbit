@@ -29,6 +29,6 @@
 
 ## 6. 総合検証
 
-- [ ] 6.1 `LLM_PROVIDER=deepseek` で実際に対話し、イベント登録メッセージから検索結果に基づく予定案が生成されることを確認する（chat-scheduling 仕様のシナリオ）
-- [ ] 6.2 `LLM_PROVIDER=claude` に切り替えると従来の Claude＋ネイティブ検索へコード変更なしで復帰できることを確認する（ロールバック手順）
+- [x] 6.1 `LLM_PROVIDER=deepseek` で実際に対話し、イベント登録メッセージから検索結果に基づく予定案が生成されることを確認する（chat-scheduling 仕様のシナリオ）
+- [x] 6.2 `LLM_PROVIDER=claude` に切り替えると従来の Claude＋ネイティブ検索へコード変更なしで復帰できることを確認する（ロールバック手順）
 - [x] 6.3 `go test ./...` と `openspec validate switch-llm-to-deepseek --strict` がともにパスすることを確認する
