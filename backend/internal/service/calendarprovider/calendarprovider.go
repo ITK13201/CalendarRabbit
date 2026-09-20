@@ -33,6 +33,11 @@ type CalendarProvider interface {
 }
 
 // DBProvider は DB（ent）を用いた CalendarProvider 実装。
+//
+// 各メソッドは persistence.CalendarEventRepository への薄い委譲であり、
+// 計装（logging.Trace）は行わない。DB 呼び出しの前後ログは委譲先の
+// persistence 層に集約しており（4.1）、ここで計装すると同一 DB 操作に対して
+// 二重の started/finished ログが出てしまうためである（design D4）。
 type DBProvider struct {
 	repo *persistence.CalendarEventRepository
 }

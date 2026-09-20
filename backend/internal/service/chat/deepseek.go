@@ -129,7 +129,10 @@ func newDeepSeekExtractorWithClient(client chatCompleter, searcher Searcher, mod
 
 // Extract は事前検索→結果注入→LLM 1 回呼び出しでイベントを抽出する。
 // 初回が not_found の場合のみ、クエリを見直して最大 1 回だけ再検索・再抽出する（design.md D5）。
-func (e *DeepSeekExtractor) Extract(ctx context.Context, history []Turn, userMessage string) (*ExtractionResult, error) {
+func (e *DeepSeekExtractor) Extract(ctx context.Context, history []Turn, userMessage string) (res *ExtractionResult, err error) {
+	defer logging.Trace(ctx, e.logger, "chat.DeepSeekExtractor.Extract",
+		logging.Args{"userMessage": userMessage, "historyLen": len(history)}, &res, &err)()
+
 	query := buildSearchQuery(userMessage, e.now().In(jst))
 
 	result, err := e.searchAndExtract(ctx, history, userMessage, query)
@@ -138,6 +141,7 @@ func (e *DeepSeekExtractor) Extract(ctx context.Context, history []Turn, userMes
 	}
 
 	// not_found の場合のみ限定的 2 パス（再検索は最大 maxDeepSeekResearch 回）。
+	// 再検索の attempt/query は started/finished では表せない固有の診断情報のため残す（design D4）。
 	for attempt := 0; result.Status == StatusNotFound && attempt < maxDeepSeekResearch; attempt++ {
 		query = refineSearchQuery(query)
 		logging.LogContext(ctx, e.logger, slog.LevelInfo, "chat.deepseek.research",
@@ -148,7 +152,7 @@ func (e *DeepSeekExtractor) Extract(ctx context.Context, history []Turn, userMes
 		}
 	}
 
-	logging.LogContext(ctx, e.logger, slog.LevelInfo, "chat.deepseek.extracted", slog.String("status", string(result.Status)))
+	// extracted（status）は Trace の finished（result）へ集約したため撤去。
 	return result, nil
 }
 
@@ -177,6 +181,7 @@ func (e *DeepSeekExtractor) searchAndExtract(ctx context.Context, history []Turn
 	)
 	messages = append(messages, openai.UserMessage(userContent))
 
+	callStart := time.Now()
 	resp, err := e.client.New(ctx, openai.ChatCompletionNewParams{
 		Model:     openai.ChatModel(e.model),
 		MaxTokens: openai.Int(deepSeekMaxTokens),
@@ -186,19 +191,26 @@ func (e *DeepSeekExtractor) searchAndExtract(ctx context.Context, history []Turn
 			OfJSONObject: &shared.ResponseFormatJSONObjectParam{},
 		},
 	})
+	callLatency := time.Since(callStart)
 	if err != nil {
-		logging.LogContext(ctx, e.logger, slog.LevelError, "chat.deepseek.request_failed", slog.String("error", err.Error()))
+		// request 失敗は Trace（Extract）の finished error へ集約したため個別ログは撤去。
 		return nil, fmt.Errorf("deepseek request failed: %w", err)
 	}
 
 	text := collectOpenAIText(resp)
+	// レスポンスボディ（LLM 生応答）を extra.responseBody として丸め、外部API実行の latency_ms を出力する（design D4）。
+	logging.LogContext(ctx, e.logger, slog.LevelInfo, "chat.deepseek.response",
+		slog.Float64("latency_ms", logging.DurationMillis(callLatency)),
+		slog.String("responseBody", logging.Truncate(text, logging.MaxTruncateRunes)))
+
 	result, err := parseExtraction(text)
 	if err != nil {
+		// parse 失敗時の finish_reason は started/finished では表せない固有の診断情報のため残す
+		// （raw 抜粋は上の responseBody に含まれる。design D4）。
 		logging.LogContext(ctx, e.logger, slog.LevelError, "chat.deepseek.parse_failed",
 			slog.String("error", err.Error()),
 			slog.String("finish_reason", finishReason(resp)),
 			slog.Int("text_len", len(text)),
-			slog.String("raw", truncate(text, 1000)),
 		)
 		return nil, err
 	}
@@ -219,13 +231,4 @@ func finishReason(resp *openai.ChatCompletion) string {
 		return ""
 	}
 	return resp.Choices[0].FinishReason
-}
-
-// truncate は文字列を最大 n 文字（rune 単位）に丸める。
-func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "…"
 }

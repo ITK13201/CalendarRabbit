@@ -2,22 +2,25 @@ package persistence
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/ITK13201/CalendarRabbit/backend/ent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/calendarevent"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/logging"
 )
 
 // CalendarEventRepository は CalendarEvent の永続化を担う。
 type CalendarEventRepository struct {
 	client *ent.Client
+	logger *slog.Logger
 }
 
 // NewCalendarEventRepository は CalendarEventRepository を生成する。
-func NewCalendarEventRepository(client *ent.Client) *CalendarEventRepository {
-	return &CalendarEventRepository{client: client}
+func NewCalendarEventRepository(client *ent.Client, logger *slog.Logger) *CalendarEventRepository {
+	return &CalendarEventRepository{client: client, logger: logger}
 }
 
 // CalendarEventInput は作成・更新の入力。
@@ -31,7 +34,9 @@ type CalendarEventInput struct {
 	SourceURL   string
 }
 
-func (r *CalendarEventRepository) Create(ctx context.Context, in CalendarEventInput) (*entity.CalendarEvent, error) {
+func (r *CalendarEventRepository) Create(ctx context.Context, in CalendarEventInput) (res *entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.Create", logging.Args{"in": in}, &res, &err)()
+
 	row, err := r.client.CalendarEvent.Create().
 		SetTitle(in.Title).
 		SetStartsAt(in.StartsAt.UTC()).
@@ -47,7 +52,9 @@ func (r *CalendarEventRepository) Create(ctx context.Context, in CalendarEventIn
 	return mapCalendarEvent(row), nil
 }
 
-func (r *CalendarEventRepository) Get(ctx context.Context, id int) (*entity.CalendarEvent, error) {
+func (r *CalendarEventRepository) Get(ctx context.Context, id int) (res *entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.Get", logging.Args{"id": id}, &res, &err)()
+
 	row, err := r.client.CalendarEvent.Get(ctx, id)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -58,7 +65,9 @@ func (r *CalendarEventRepository) Get(ctx context.Context, id int) (*entity.Cale
 	return mapCalendarEvent(row), nil
 }
 
-func (r *CalendarEventRepository) Update(ctx context.Context, id int, in CalendarEventInput) (*entity.CalendarEvent, error) {
+func (r *CalendarEventRepository) Update(ctx context.Context, id int, in CalendarEventInput) (res *entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.Update", logging.Args{"id": id, "in": in}, &res, &err)()
+
 	row, err := r.client.CalendarEvent.UpdateOneID(id).
 		SetTitle(in.Title).
 		SetStartsAt(in.StartsAt.UTC()).
@@ -77,8 +86,10 @@ func (r *CalendarEventRepository) Update(ctx context.Context, id int, in Calenda
 	return mapCalendarEvent(row), nil
 }
 
-func (r *CalendarEventRepository) Delete(ctx context.Context, id int) error {
-	err := r.client.CalendarEvent.DeleteOneID(id).Exec(ctx)
+func (r *CalendarEventRepository) Delete(ctx context.Context, id int) (err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.Delete", logging.Args{"id": id}, nil, &err)()
+
+	err = r.client.CalendarEvent.DeleteOneID(id).Exec(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return derr.ErrNotFound
@@ -90,7 +101,10 @@ func (r *CalendarEventRepository) Delete(ctx context.Context, id int) error {
 
 // ListByPeriod は指定期間 [from, to) に重なるイベントを開始日時順で返す。
 // 重なり条件: starts_at < to かつ ends_at > from（複数日イベントを包含）。
-func (r *CalendarEventRepository) ListByPeriod(ctx context.Context, from, to time.Time) ([]*entity.CalendarEvent, error) {
+func (r *CalendarEventRepository) ListByPeriod(ctx context.Context, from, to time.Time) (res []*entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.ListByPeriod",
+		logging.Args{"from": from, "to": to}, &res, &err)()
+
 	rows, err := r.client.CalendarEvent.Query().
 		Where(
 			calendarevent.StartsAtLT(to.UTC()),
@@ -105,7 +119,9 @@ func (r *CalendarEventRepository) ListByPeriod(ctx context.Context, from, to tim
 }
 
 // List は全イベントを開始日時順で返す。
-func (r *CalendarEventRepository) List(ctx context.Context) ([]*entity.CalendarEvent, error) {
+func (r *CalendarEventRepository) List(ctx context.Context) (res []*entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.List", nil, &res, &err)()
+
 	rows, err := r.client.CalendarEvent.Query().
 		Order(ent.Asc(calendarevent.FieldStartsAt)).
 		All(ctx)

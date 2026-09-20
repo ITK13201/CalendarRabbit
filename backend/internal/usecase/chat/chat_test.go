@@ -78,7 +78,7 @@ func TestSendMessage_EventCreatesPendingProposalNotRegistered(t *testing.T) {
 	assert.Equal(t, "東京ゲームショウ2026", res.Proposal.Title)
 
 	// 承認前はカレンダーに登録されない
-	events, err := persistence.NewCalendarEventRepository(client).List(ctx)
+	events, err := persistence.NewCalendarEventRepository(client, nil).List(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, events)
 }
@@ -138,12 +138,12 @@ func TestApproveProposal_RegistersEvent(t *testing.T) {
 	assert.Equal(t, "東京ゲームショウ2026", event.Title)
 
 	// カレンダーに登録される
-	events, err := persistence.NewCalendarEventRepository(client).List(ctx)
+	events, err := persistence.NewCalendarEventRepository(client, nil).List(ctx)
 	require.NoError(t, err)
 	require.Len(t, events, 1)
 
 	// 予定案が approved になり event に紐付く
-	prop, err := persistence.NewEventProposalRepository(client).Get(ctx, sent.Proposal.ID)
+	prop, err := persistence.NewEventProposalRepository(client, nil).Get(ctx, sent.Proposal.ID)
 	require.NoError(t, err)
 	assert.Equal(t, entity.ProposalStatusApproved, prop.Status)
 	require.NotNil(t, prop.CalendarEventID)
@@ -202,7 +202,7 @@ func TestApproveProposal_AlreadyProcessed(t *testing.T) {
 	_, err = uc.ApproveProposal(ctx, sent.Proposal.ID, nil)
 	assert.ErrorIs(t, err, derr.ErrConflict)
 
-	events, err := persistence.NewCalendarEventRepository(client).List(ctx)
+	events, err := persistence.NewCalendarEventRepository(client, nil).List(ctx)
 	require.NoError(t, err)
 	assert.Len(t, events, 1, "no duplicate registration")
 }
@@ -220,7 +220,7 @@ func TestRejectProposal(t *testing.T) {
 	assert.Equal(t, entity.ProposalStatusRejected, rejected.Status)
 
 	// 登録されない
-	events, err := persistence.NewCalendarEventRepository(client).List(ctx)
+	events, err := persistence.NewCalendarEventRepository(client, nil).List(ctx)
 	require.NoError(t, err)
 	assert.Empty(t, events)
 

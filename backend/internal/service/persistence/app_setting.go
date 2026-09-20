@@ -2,11 +2,13 @@ package persistence
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/ITK13201/CalendarRabbit/backend/ent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/appsetting"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/logging"
 )
 
 // AppSettingInput は設定の作成／更新に用いる入力。
@@ -19,14 +21,17 @@ type AppSettingInput struct {
 // 単一ユーザー・単一カレンダー前提のため、常に最古の1レコードを設定として扱う。
 type AppSettingRepository struct {
 	client *ent.Client
+	logger *slog.Logger
 }
 
-func NewAppSettingRepository(client *ent.Client) *AppSettingRepository {
-	return &AppSettingRepository{client: client}
+func NewAppSettingRepository(client *ent.Client, logger *slog.Logger) *AppSettingRepository {
+	return &AppSettingRepository{client: client, logger: logger}
 }
 
 // Get は設定レコードを取得する。未初期化なら derr.ErrNotFound を返す。
-func (r *AppSettingRepository) Get(ctx context.Context) (*entity.AppSetting, error) {
+func (r *AppSettingRepository) Get(ctx context.Context) (res *entity.AppSetting, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.AppSettingRepository.Get", nil, &res, &err)()
+
 	row, err := r.client.AppSetting.Query().
 		Order(ent.Asc(appsetting.FieldID)).
 		First(ctx)
@@ -40,7 +45,9 @@ func (r *AppSettingRepository) Get(ctx context.Context) (*entity.AppSetting, err
 }
 
 // Upsert は設定レコードを作成または更新する。
-func (r *AppSettingRepository) Upsert(ctx context.Context, in AppSettingInput) (*entity.AppSetting, error) {
+func (r *AppSettingRepository) Upsert(ctx context.Context, in AppSettingInput) (res *entity.AppSetting, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.AppSettingRepository.Upsert", logging.Args{"in": in}, &res, &err)()
+
 	provider := appsetting.LlmProvider(in.LLMProvider)
 	existing, err := r.client.AppSetting.Query().
 		Order(ent.Asc(appsetting.FieldID)).

@@ -66,7 +66,11 @@ type tavilyResponse struct {
 }
 
 // Search は Tavily で検索し、本文抜粋＋URL の結果を返す。
-func (s *TavilySearcher) Search(ctx context.Context, query string) ([]SearchResult, error) {
+// started/finished（引数・戻り値・エラー）は Trace に集約し、request_failed/non_200/
+// decode_failed/completed の個別ログは撤去する（design D4）。
+func (s *TavilySearcher) Search(ctx context.Context, query string) (res []SearchResult, err error) {
+	defer logging.Trace(ctx, s.logger, "chat.TavilySearcher.Search", logging.Args{"query": query}, &res, &err)()
+
 	body, err := json.Marshal(tavilyRequest{
 		Query:       query,
 		MaxResults:  s.maxResults,
@@ -83,23 +87,30 @@ func (s *TavilySearcher) Search(ctx context.Context, query string) ([]SearchResu
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+s.apiKey)
 
+	callStart := time.Now()
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		logging.LogContext(ctx, s.logger, slog.LevelError, "chat.search.request_failed", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("tavily request failed: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
+	raw, err := io.ReadAll(resp.Body)
+	callLatency := time.Since(callStart)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read tavily response: %w", err)
+	}
+	// レスポンスボディを extra.responseBody として丸め、外部API実行の latency_ms を出力する（design D4）。
+	logging.LogContext(ctx, s.logger, slog.LevelInfo, "chat.tavily.response",
+		slog.Int("status", resp.StatusCode),
+		slog.Float64("latency_ms", logging.DurationMillis(callLatency)),
+		slog.String("responseBody", logging.Truncate(string(raw), logging.MaxTruncateRunes)))
+
 	if resp.StatusCode != http.StatusOK {
-		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
-		logging.LogContext(ctx, s.logger, slog.LevelError, "chat.search.non_200",
-			slog.Int("status", resp.StatusCode), slog.String("body", string(raw)))
 		return nil, fmt.Errorf("tavily returned status %d", resp.StatusCode)
 	}
 
 	var parsed tavilyResponse
-	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
-		logging.LogContext(ctx, s.logger, slog.LevelError, "chat.search.decode_failed", slog.String("error", err.Error()))
+	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return nil, fmt.Errorf("failed to decode tavily response: %w", err)
 	}
 
@@ -107,7 +118,5 @@ func (s *TavilySearcher) Search(ctx context.Context, query string) ([]SearchResu
 	for _, r := range parsed.Results {
 		results = append(results, SearchResult{Title: r.Title, URL: r.URL, Content: r.Content})
 	}
-	logging.LogContext(ctx, s.logger, slog.LevelInfo, "chat.search.completed",
-		slog.String("query", query), slog.Int("results", len(results)))
 	return results, nil
 }

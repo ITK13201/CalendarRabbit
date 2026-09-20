@@ -2,25 +2,30 @@ package persistence
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/ITK13201/CalendarRabbit/backend/ent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/conversation"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/logging"
 )
 
 // ConversationRepository は単一連続スレッド（Conversation）の永続化を担う。
 type ConversationRepository struct {
 	client *ent.Client
+	logger *slog.Logger
 }
 
-func NewConversationRepository(client *ent.Client) *ConversationRepository {
-	return &ConversationRepository{client: client}
+func NewConversationRepository(client *ent.Client, logger *slog.Logger) *ConversationRepository {
+	return &ConversationRepository{client: client, logger: logger}
 }
 
 // GetOrCreate は既存の会話（最古の1件）を返す。無ければ新規作成する。
 // 単一連続スレッド前提のため、常に同一スレッドを返す。
-func (r *ConversationRepository) GetOrCreate(ctx context.Context) (*entity.Conversation, error) {
+func (r *ConversationRepository) GetOrCreate(ctx context.Context) (res *entity.Conversation, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.ConversationRepository.GetOrCreate", nil, &res, &err)()
+
 	row, err := r.client.Conversation.Query().
 		Order(ent.Asc(conversation.FieldID)).
 		First(ctx)
@@ -38,7 +43,9 @@ func (r *ConversationRepository) GetOrCreate(ctx context.Context) (*entity.Conve
 }
 
 // Get は指定IDの会話を取得する。
-func (r *ConversationRepository) Get(ctx context.Context, id int) (*entity.Conversation, error) {
+func (r *ConversationRepository) Get(ctx context.Context, id int) (res *entity.Conversation, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.ConversationRepository.Get", logging.Args{"id": id}, &res, &err)()
+
 	row, err := r.client.Conversation.Get(ctx, id)
 	if err != nil {
 		if ent.IsNotFound(err) {

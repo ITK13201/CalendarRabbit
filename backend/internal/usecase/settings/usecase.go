@@ -49,11 +49,12 @@ func New(repo Repository, logger *slog.Logger) *UseCase {
 }
 
 // Get は現在の設定を取得する。未初期化なら既定値（TZ=Asia/Tokyo, provider=deepseek）を返す。
-func (u *UseCase) Get(ctx context.Context) (*entity.AppSetting, error) {
+func (u *UseCase) Get(ctx context.Context) (res *entity.AppSetting, err error) {
+	defer logging.Trace(ctx, u.logger, "settings.UseCase.Get", nil, &res, &err)()
+
 	s, err := u.repo.Get(ctx)
 	if err != nil {
 		if errors.Is(err, derr.ErrNotFound) {
-			logging.LogContext(ctx, u.logger, slog.LevelInfo, "settings.get.default")
 			return &entity.AppSetting{Timezone: DefaultTimezone, LLMProvider: DefaultLLMProvider}, nil
 		}
 		return nil, err
@@ -66,7 +67,10 @@ func (u *UseCase) Get(ctx context.Context) (*entity.AppSetting, error) {
 }
 
 // Update はタイムゾーンと LLM プロバイダを検証して設定を更新する。無効値は拒否する。
-func (u *UseCase) Update(ctx context.Context, timezone, llmProvider string) (*entity.AppSetting, error) {
+func (u *UseCase) Update(ctx context.Context, timezone, llmProvider string) (res *entity.AppSetting, err error) {
+	defer logging.Trace(ctx, u.logger, "settings.UseCase.Update",
+		logging.Args{"timezone": timezone, "llmProvider": llmProvider}, &res, &err)()
+
 	if timezone == "" {
 		return nil, derr.NewValidationError("timezone", "timezone is required")
 	}
@@ -79,7 +83,5 @@ func (u *UseCase) Update(ctx context.Context, timezone, llmProvider string) (*en
 	if _, ok := validProviders[llmProvider]; !ok {
 		return nil, derr.NewValidationError("llm_provider", "unknown llm provider")
 	}
-	logging.LogContext(ctx, u.logger, slog.LevelInfo, "settings.update",
-		slog.String("timezone", timezone), slog.String("llm_provider", llmProvider))
 	return u.repo.Upsert(ctx, persistence.AppSettingInput{Timezone: timezone, LLMProvider: llmProvider})
 }

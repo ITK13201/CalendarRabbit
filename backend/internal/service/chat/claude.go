@@ -104,7 +104,10 @@ type eventDTO struct {
 }
 
 // Extract は会話履歴とユーザーメッセージを送り、イベント抽出結果を返す。
-func (e *ClaudeExtractor) Extract(ctx context.Context, history []Turn, userMessage string) (*ExtractionResult, error) {
+func (e *ClaudeExtractor) Extract(ctx context.Context, history []Turn, userMessage string) (res *ExtractionResult, err error) {
+	defer logging.Trace(ctx, e.logger, "chat.ClaudeExtractor.Extract",
+		logging.Args{"userMessage": userMessage, "historyLen": len(history)}, &res, &err)()
+
 	messages := make([]anthropic.MessageParam, 0, len(history)+1)
 	for _, t := range history {
 		block := anthropic.NewTextBlock(t.Content)
@@ -130,19 +133,24 @@ func (e *ClaudeExtractor) Extract(ctx context.Context, history []Turn, userMessa
 		},
 	}
 
+	// request 失敗・extracted（status）は Trace の started/finished（error・result）へ集約したため個別ログは撤去。
+	callStart := time.Now()
 	resp, err := e.client.New(ctx, params)
+	callLatency := time.Since(callStart)
 	if err != nil {
-		logging.LogContext(ctx, e.logger, slog.LevelError, "chat.claude.request_failed", slog.String("error", err.Error()))
 		return nil, fmt.Errorf("claude request failed: %w", err)
 	}
 
 	text := collectText(resp)
+	// レスポンスボディ（LLM 生応答）を extra.responseBody として丸め、外部API実行の latency_ms を出力する（design D4）。
+	logging.LogContext(ctx, e.logger, slog.LevelInfo, "chat.claude.response",
+		slog.Float64("latency_ms", logging.DurationMillis(callLatency)),
+		slog.String("responseBody", logging.Truncate(text, logging.MaxTruncateRunes)))
+
 	result, err := parseExtraction(text)
 	if err != nil {
-		logging.LogContext(ctx, e.logger, slog.LevelError, "chat.claude.parse_failed", slog.String("error", err.Error()))
 		return nil, err
 	}
-	logging.LogContext(ctx, e.logger, slog.LevelInfo, "chat.claude.extracted", slog.String("status", string(result.Status)))
 	return result, nil
 }
 

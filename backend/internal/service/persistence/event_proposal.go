@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/ITK13201/CalendarRabbit/backend/ent"
@@ -9,15 +10,17 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/ent/eventproposal"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/entity"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/logging"
 )
 
 // EventProposalRepository は予定案（EventProposal）の永続化を担う。
 type EventProposalRepository struct {
 	client *ent.Client
+	logger *slog.Logger
 }
 
-func NewEventProposalRepository(client *ent.Client) *EventProposalRepository {
-	return &EventProposalRepository{client: client}
+func NewEventProposalRepository(client *ent.Client, logger *slog.Logger) *EventProposalRepository {
+	return &EventProposalRepository{client: client, logger: logger}
 }
 
 // EventProposalInput は予定案作成の入力。
@@ -34,7 +37,9 @@ type EventProposalInput struct {
 }
 
 // Create は予定案を pending 状態で作成する。
-func (r *EventProposalRepository) Create(ctx context.Context, in EventProposalInput) (*entity.EventProposal, error) {
+func (r *EventProposalRepository) Create(ctx context.Context, in EventProposalInput) (res *entity.EventProposal, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.Create", logging.Args{"in": in}, &res, &err)()
+
 	builder := r.client.EventProposal.Create().
 		SetConversationID(in.ConversationID).
 		SetTitle(in.Title).
@@ -56,7 +61,9 @@ func (r *EventProposalRepository) Create(ctx context.Context, in EventProposalIn
 }
 
 // Get は予定案を取得する（関連IDを含む）。
-func (r *EventProposalRepository) Get(ctx context.Context, id int) (*entity.EventProposal, error) {
+func (r *EventProposalRepository) Get(ctx context.Context, id int) (res *entity.EventProposal, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.Get", logging.Args{"id": id}, &res, &err)()
+
 	row, err := r.client.EventProposal.Query().
 		Where(eventproposal.ID(id)).
 		WithConversation().
@@ -73,7 +80,10 @@ func (r *EventProposalRepository) Get(ctx context.Context, id int) (*entity.Even
 }
 
 // ListByConversation は会話の予定案を作成日時順で返す。
-func (r *EventProposalRepository) ListByConversation(ctx context.Context, conversationID int) ([]*entity.EventProposal, error) {
+func (r *EventProposalRepository) ListByConversation(ctx context.Context, conversationID int) (res []*entity.EventProposal, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.ListByConversation",
+		logging.Args{"conversationID": conversationID}, &res, &err)()
+
 	rows, err := r.client.EventProposal.Query().
 		Where(eventproposal.HasConversationWith(conversation.IDEQ(conversationID))).
 		WithConversation().
@@ -104,7 +114,10 @@ type EditableFields struct {
 
 // MarkApproved は予定案を approved に更新し、作成された CalendarEvent を紐付ける。
 // 編集後フィールドがある場合は予定案本体にも反映する。
-func (r *EventProposalRepository) MarkApproved(ctx context.Context, id, calendarEventID int, edited *EditableFields) (*entity.EventProposal, error) {
+func (r *EventProposalRepository) MarkApproved(ctx context.Context, id, calendarEventID int, edited *EditableFields) (res *entity.EventProposal, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.MarkApproved",
+		logging.Args{"id": id, "calendarEventID": calendarEventID, "edited": edited}, &res, &err)()
+
 	builder := r.client.EventProposal.UpdateOneID(id).
 		SetStatus(eventproposal.StatusApproved).
 		SetCalendarEventID(calendarEventID)
@@ -128,7 +141,9 @@ func (r *EventProposalRepository) MarkApproved(ctx context.Context, id, calendar
 }
 
 // MarkRejected は予定案を rejected に更新する。
-func (r *EventProposalRepository) MarkRejected(ctx context.Context, id int) (*entity.EventProposal, error) {
+func (r *EventProposalRepository) MarkRejected(ctx context.Context, id int) (res *entity.EventProposal, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.MarkRejected", logging.Args{"id": id}, &res, &err)()
+
 	if _, err := r.client.EventProposal.UpdateOneID(id).
 		SetStatus(eventproposal.StatusRejected).
 		Save(ctx); err != nil {
@@ -141,8 +156,11 @@ func (r *EventProposalRepository) MarkRejected(ctx context.Context, id int) (*en
 }
 
 // DeleteByConversation は会話に属する全予定案を削除する。
-func (r *EventProposalRepository) DeleteByConversation(ctx context.Context, conversationID int) error {
-	_, err := r.client.EventProposal.Delete().
+func (r *EventProposalRepository) DeleteByConversation(ctx context.Context, conversationID int) (err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.EventProposalRepository.DeleteByConversation",
+		logging.Args{"conversationID": conversationID}, nil, &err)()
+
+	_, err = r.client.EventProposal.Delete().
 		Where(eventproposal.HasConversationWith(conversation.IDEQ(conversationID))).
 		Exec(ctx)
 	return err

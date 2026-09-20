@@ -56,8 +56,8 @@ func main() {
 	defer func() { _ = client.Close() }()
 
 	// usecases
-	calUC := calendar.New(calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client)), logger)
-	setUC := settings.New(persistence.NewAppSettingRepository(client), logger)
+	calUC := calendar.New(calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client, logger)), logger)
+	setUC := settings.New(persistence.NewAppSettingRepository(client, logger), logger)
 	// 両プロバイダの Extractor を構築し、実行時に設定（設定画面）で選択する。
 	extractors := buildExtractors(cfg, logger)
 	chUC := chatuc.New(client, extractors, setUC, cfg.LLMProvider, logger)
