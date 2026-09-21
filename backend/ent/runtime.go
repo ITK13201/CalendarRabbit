@@ -9,6 +9,7 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/ent/calendarevent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/conversation"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/eventproposal"
+	"github.com/ITK13201/CalendarRabbit/backend/ent/googleconnection"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/message"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/schema"
 )
@@ -53,12 +54,20 @@ func init() {
 	calendareventDescSourceURL := calendareventFields[6].Descriptor()
 	// calendarevent.DefaultSourceURL holds the default value on creation for the source_url field.
 	calendarevent.DefaultSourceURL = calendareventDescSourceURL.Default.(string)
+	// calendareventDescGoogleEventID is the schema descriptor for google_event_id field.
+	calendareventDescGoogleEventID := calendareventFields[7].Descriptor()
+	// calendarevent.DefaultGoogleEventID holds the default value on creation for the google_event_id field.
+	calendarevent.DefaultGoogleEventID = calendareventDescGoogleEventID.Default.(string)
+	// calendareventDescSyncPending is the schema descriptor for sync_pending field.
+	calendareventDescSyncPending := calendareventFields[8].Descriptor()
+	// calendarevent.DefaultSyncPending holds the default value on creation for the sync_pending field.
+	calendarevent.DefaultSyncPending = calendareventDescSyncPending.Default.(bool)
 	// calendareventDescCreatedAt is the schema descriptor for created_at field.
-	calendareventDescCreatedAt := calendareventFields[7].Descriptor()
+	calendareventDescCreatedAt := calendareventFields[9].Descriptor()
 	// calendarevent.DefaultCreatedAt holds the default value on creation for the created_at field.
 	calendarevent.DefaultCreatedAt = calendareventDescCreatedAt.Default.(func() time.Time)
 	// calendareventDescUpdatedAt is the schema descriptor for updated_at field.
-	calendareventDescUpdatedAt := calendareventFields[8].Descriptor()
+	calendareventDescUpdatedAt := calendareventFields[10].Descriptor()
 	// calendarevent.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	calendarevent.DefaultUpdatedAt = calendareventDescUpdatedAt.Default.(func() time.Time)
 	// calendarevent.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -107,6 +116,34 @@ func init() {
 	eventproposal.DefaultUpdatedAt = eventproposalDescUpdatedAt.Default.(func() time.Time)
 	// eventproposal.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	eventproposal.UpdateDefaultUpdatedAt = eventproposalDescUpdatedAt.UpdateDefault.(func() time.Time)
+	googleconnectionFields := schema.GoogleConnection{}.Fields()
+	_ = googleconnectionFields
+	// googleconnectionDescRefreshToken is the schema descriptor for refresh_token field.
+	googleconnectionDescRefreshToken := googleconnectionFields[0].Descriptor()
+	// googleconnection.DefaultRefreshToken holds the default value on creation for the refresh_token field.
+	googleconnection.DefaultRefreshToken = googleconnectionDescRefreshToken.Default.(string)
+	// googleconnectionDescAccessToken is the schema descriptor for access_token field.
+	googleconnectionDescAccessToken := googleconnectionFields[1].Descriptor()
+	// googleconnection.DefaultAccessToken holds the default value on creation for the access_token field.
+	googleconnection.DefaultAccessToken = googleconnectionDescAccessToken.Default.(string)
+	// googleconnectionDescCalendarID is the schema descriptor for calendar_id field.
+	googleconnectionDescCalendarID := googleconnectionFields[3].Descriptor()
+	// googleconnection.DefaultCalendarID holds the default value on creation for the calendar_id field.
+	googleconnection.DefaultCalendarID = googleconnectionDescCalendarID.Default.(string)
+	// googleconnectionDescConnected is the schema descriptor for connected field.
+	googleconnectionDescConnected := googleconnectionFields[4].Descriptor()
+	// googleconnection.DefaultConnected holds the default value on creation for the connected field.
+	googleconnection.DefaultConnected = googleconnectionDescConnected.Default.(bool)
+	// googleconnectionDescCreatedAt is the schema descriptor for created_at field.
+	googleconnectionDescCreatedAt := googleconnectionFields[5].Descriptor()
+	// googleconnection.DefaultCreatedAt holds the default value on creation for the created_at field.
+	googleconnection.DefaultCreatedAt = googleconnectionDescCreatedAt.Default.(func() time.Time)
+	// googleconnectionDescUpdatedAt is the schema descriptor for updated_at field.
+	googleconnectionDescUpdatedAt := googleconnectionFields[6].Descriptor()
+	// googleconnection.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	googleconnection.DefaultUpdatedAt = googleconnectionDescUpdatedAt.Default.(func() time.Time)
+	// googleconnection.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	googleconnection.UpdateDefaultUpdatedAt = googleconnectionDescUpdatedAt.UpdateDefault.(func() time.Time)
 	messageFields := schema.Message{}.Fields()
 	_ = messageFields
 	// messageDescCreatedAt is the schema descriptor for created_at field.

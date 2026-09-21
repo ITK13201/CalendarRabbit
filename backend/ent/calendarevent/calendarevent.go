@@ -28,6 +28,10 @@ const (
 	FieldDescription = "description"
 	// FieldSourceURL holds the string denoting the source_url field in the database.
 	FieldSourceURL = "source_url"
+	// FieldGoogleEventID holds the string denoting the google_event_id field in the database.
+	FieldGoogleEventID = "google_event_id"
+	// FieldSyncPending holds the string denoting the sync_pending field in the database.
+	FieldSyncPending = "sync_pending"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -55,6 +59,8 @@ var Columns = []string{
 	FieldLocation,
 	FieldDescription,
 	FieldSourceURL,
+	FieldGoogleEventID,
+	FieldSyncPending,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -80,6 +86,10 @@ var (
 	DefaultDescription string
 	// DefaultSourceURL holds the default value on creation for the "source_url" field.
 	DefaultSourceURL string
+	// DefaultGoogleEventID holds the default value on creation for the "google_event_id" field.
+	DefaultGoogleEventID string
+	// DefaultSyncPending holds the default value on creation for the "sync_pending" field.
+	DefaultSyncPending bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -129,6 +139,16 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // BySourceURL orders the results by the source_url field.
 func BySourceURL(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSourceURL, opts...).ToFunc()
+}
+
+// ByGoogleEventID orders the results by the google_event_id field.
+func ByGoogleEventID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGoogleEventID, opts...).ToFunc()
+}
+
+// BySyncPending orders the results by the sync_pending field.
+func BySyncPending(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSyncPending, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

@@ -37,6 +37,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: '/index.html',
+        // API と Swagger への遷移（例: Google OAuth コールバック /api/google/callback）は
+        // SW の index.html フォールバックで握りつぶさず、ネットワーク（nginx→backend）へ通す。
+        // これがないと OAuth コールバックがバックエンドに届かず連携が完了しない。
+        navigateFallbackDenylist: [/^\/api\//, /^\/swagger\//],
       },
     }),
   ],

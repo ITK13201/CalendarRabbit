@@ -1,13 +1,5 @@
 import { useState } from 'react'
-import DatePicker, { registerLocale } from 'react-datepicker'
-import { ja } from 'date-fns/locale'
-import 'react-datepicker/dist/react-datepicker.css'
 import type { EventInput } from '../api/types'
-
-registerLocale('ja', ja)
-
-// 入力/表示に用いる日時フォーマット（24時間表記）。
-const DATETIME_FORMAT = 'yyyy/MM/dd, HH:mm'
 
 interface EventFormProps {
   title: string
@@ -17,18 +9,25 @@ interface EventFormProps {
   onDelete?: () => Promise<void>
 }
 
-// ISO文字列を Date へ変換（空なら null）。
-function toDate(iso: string): Date | null {
-  if (!iso) return null
+// ISO文字列を <input type="datetime-local"> 用のローカル値へ変換。
+function toLocalInput(iso: string): string {
+  if (!iso) return ''
   const d = new Date(iso)
-  return isNaN(d.getTime()) ? null : d
+  if (isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// <input type="datetime-local"> のローカル値を ISO(UTC) 文字列へ変換。
+function fromLocalInput(local: string): string {
+  return new Date(local).toISOString()
 }
 
 export function EventForm({ title, initial, onSubmit, onCancel, onDelete }: EventFormProps) {
   const [form, setForm] = useState({
     title: initial.title,
-    starts_at: toDate(initial.starts_at),
-    ends_at: toDate(initial.ends_at),
+    starts_at: toLocalInput(initial.starts_at),
+    ends_at: toLocalInput(initial.ends_at),
     all_day: initial.all_day,
     location: initial.location,
     description: initial.description,
@@ -51,8 +50,8 @@ export function EventForm({ title, initial, onSubmit, onCancel, onDelete }: Even
     try {
       await onSubmit({
         title: form.title,
-        starts_at: form.starts_at.toISOString(),
-        ends_at: form.ends_at.toISOString(),
+        starts_at: fromLocalInput(form.starts_at),
+        ends_at: fromLocalInput(form.ends_at),
         all_day: form.all_day,
         location: form.location,
         description: form.description,
@@ -75,33 +74,19 @@ export function EventForm({ title, initial, onSubmit, onCancel, onDelete }: Even
         </label>
         <label className="field">
           <span>開始</span>
-          <DatePicker
-            selected={form.starts_at}
-            onChange={(d: Date | null) => setForm({ ...form, starts_at: d })}
-            showTimeSelect
-            timeFormat="HH:mm"
-            timeIntervals={15}
-            timeCaption="時刻"
-            dateFormat={DATETIME_FORMAT}
-            locale="ja"
-            placeholderText="yyyy/mm/dd, hh:mm"
-            withPortal
+          <input
+            type="datetime-local"
+            value={form.starts_at}
+            onChange={(e) => setForm({ ...form, starts_at: e.target.value })}
           />
         </label>
         <label className="field">
           <span>終了</span>
-          <DatePicker
-            selected={form.ends_at}
-            onChange={(d: Date | null) => setForm({ ...form, ends_at: d })}
-            showTimeSelect
-            timeFormat="HH:mm"
-            timeIntervals={15}
-            timeCaption="時刻"
-            dateFormat={DATETIME_FORMAT}
-            locale="ja"
-            placeholderText="yyyy/mm/dd, hh:mm"
-            minDate={form.starts_at ?? undefined}
-            withPortal
+          <input
+            type="datetime-local"
+            value={form.ends_at}
+            min={form.starts_at || undefined}
+            onChange={(e) => setForm({ ...form, ends_at: e.target.value })}
           />
         </label>
         <label className="field field-inline">

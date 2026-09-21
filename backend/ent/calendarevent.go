@@ -31,6 +31,10 @@ type CalendarEvent struct {
 	Description string `json:"description,omitempty"`
 	// SourceURL holds the value of the "source_url" field.
 	SourceURL string `json:"source_url,omitempty"`
+	// GoogleEventID holds the value of the "google_event_id" field.
+	GoogleEventID string `json:"google_event_id,omitempty"`
+	// SyncPending holds the value of the "sync_pending" field.
+	SyncPending bool `json:"sync_pending,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -64,11 +68,11 @@ func (*CalendarEvent) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case calendarevent.FieldAllDay:
+		case calendarevent.FieldAllDay, calendarevent.FieldSyncPending:
 			values[i] = new(sql.NullBool)
 		case calendarevent.FieldID:
 			values[i] = new(sql.NullInt64)
-		case calendarevent.FieldTitle, calendarevent.FieldLocation, calendarevent.FieldDescription, calendarevent.FieldSourceURL:
+		case calendarevent.FieldTitle, calendarevent.FieldLocation, calendarevent.FieldDescription, calendarevent.FieldSourceURL, calendarevent.FieldGoogleEventID:
 			values[i] = new(sql.NullString)
 		case calendarevent.FieldStartsAt, calendarevent.FieldEndsAt, calendarevent.FieldCreatedAt, calendarevent.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -134,6 +138,18 @@ func (_m *CalendarEvent) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field source_url", values[i])
 			} else if value.Valid {
 				_m.SourceURL = value.String
+			}
+		case calendarevent.FieldGoogleEventID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field google_event_id", values[i])
+			} else if value.Valid {
+				_m.GoogleEventID = value.String
+			}
+		case calendarevent.FieldSyncPending:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field sync_pending", values[i])
+			} else if value.Valid {
+				_m.SyncPending = value.Bool
 			}
 		case calendarevent.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -208,6 +224,12 @@ func (_m *CalendarEvent) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("source_url=")
 	builder.WriteString(_m.SourceURL)
+	builder.WriteString(", ")
+	builder.WriteString("google_event_id=")
+	builder.WriteString(_m.GoogleEventID)
+	builder.WriteString(", ")
+	builder.WriteString("sync_pending=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SyncPending))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

@@ -21,9 +21,11 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/internal/logging"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/service/calendarprovider"
 	chatservice "github.com/ITK13201/CalendarRabbit/backend/internal/service/chat"
+	googlesvc "github.com/ITK13201/CalendarRabbit/backend/internal/service/google"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/service/persistence"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/usecase/calendar"
 	chatuc "github.com/ITK13201/CalendarRabbit/backend/internal/usecase/chat"
+	"github.com/ITK13201/CalendarRabbit/backend/internal/usecase/googlesync"
 	"github.com/ITK13201/CalendarRabbit/backend/internal/usecase/settings"
 
 	_ "github.com/ITK13201/CalendarRabbit/backend/docs/swagger"
@@ -55,9 +57,30 @@ func main() {
 	}
 	defer func() { _ = client.Close() }()
 
+	// 共有リポジトリ。
+	eventRepo := persistence.NewCalendarEventRepository(client, logger)
+	settingRepo := persistence.NewAppSettingRepository(client, logger)
+
+	// カレンダープロバイダ。Google 連携が設定済みなら DB プロバイダを
+	// MirroringProvider で包み、専用カレンダーへの即時ミラー同期を有効にする（design.md D1）。
+	var provider calendarprovider.CalendarProvider = calendarprovider.NewDBProvider(eventRepo)
+	var googleUC handler.GoogleUseCase
+	if cfg.GoogleSyncEnabled() {
+		cipher, cerr := googlesvc.NewCipher(cfg.GoogleTokenEncKey)
+		if cerr != nil {
+			logger.Error("failed to init google token cipher", slog.String("error", cerr.Error()))
+			os.Exit(1)
+		}
+		connRepo := persistence.NewGoogleConnectionRepository(client, cipher, logger)
+		factory := googlesvc.NewFactory(cfg.GoogleOAuthClientID, cfg.GoogleOAuthClientSecret, cfg.GoogleOAuthRedirectURL)
+		provider = calendarprovider.NewMirroringProvider(provider, connRepo, settingRepo, eventRepo, factory, logger)
+		googleUC = googlesync.New(connRepo, eventRepo, settingRepo, factory, logger)
+		logger.Info("google calendar sync enabled")
+	}
+
 	// usecases
-	calUC := calendar.New(calendarprovider.NewDBProvider(persistence.NewCalendarEventRepository(client, logger)), logger)
-	setUC := settings.New(persistence.NewAppSettingRepository(client, logger), logger)
+	calUC := calendar.New(provider, logger)
+	setUC := settings.New(settingRepo, logger)
 	// 両プロバイダの Extractor を構築し、実行時に設定（設定画面）で選択する。
 	extractors := buildExtractors(cfg, logger)
 	chUC := chatuc.New(client, extractors, setUC, cfg.LLMProvider, logger)
@@ -66,6 +89,7 @@ func main() {
 		Calendar: calUC,
 		Settings: setUC,
 		Chat:     chUC,
+		Google:   googleUC,
 		Logger:   logger,
 	})
 	engine := handler.NewRouter(h, handler.RouterConfig{

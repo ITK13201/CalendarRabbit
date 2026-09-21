@@ -90,6 +90,16 @@ func SourceURL(v string) predicate.CalendarEvent {
 	return predicate.CalendarEvent(sql.FieldEQ(FieldSourceURL, v))
 }
 
+// GoogleEventID applies equality check predicate on the "google_event_id" field. It's identical to GoogleEventIDEQ.
+func GoogleEventID(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldEQ(FieldGoogleEventID, v))
+}
+
+// SyncPending applies equality check predicate on the "sync_pending" field. It's identical to SyncPendingEQ.
+func SyncPending(v bool) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldEQ(FieldSyncPending, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.CalendarEvent {
 	return predicate.CalendarEvent(sql.FieldEQ(FieldCreatedAt, v))
@@ -448,6 +458,81 @@ func SourceURLEqualFold(v string) predicate.CalendarEvent {
 // SourceURLContainsFold applies the ContainsFold predicate on the "source_url" field.
 func SourceURLContainsFold(v string) predicate.CalendarEvent {
 	return predicate.CalendarEvent(sql.FieldContainsFold(FieldSourceURL, v))
+}
+
+// GoogleEventIDEQ applies the EQ predicate on the "google_event_id" field.
+func GoogleEventIDEQ(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldEQ(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDNEQ applies the NEQ predicate on the "google_event_id" field.
+func GoogleEventIDNEQ(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldNEQ(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDIn applies the In predicate on the "google_event_id" field.
+func GoogleEventIDIn(vs ...string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldIn(FieldGoogleEventID, vs...))
+}
+
+// GoogleEventIDNotIn applies the NotIn predicate on the "google_event_id" field.
+func GoogleEventIDNotIn(vs ...string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldNotIn(FieldGoogleEventID, vs...))
+}
+
+// GoogleEventIDGT applies the GT predicate on the "google_event_id" field.
+func GoogleEventIDGT(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldGT(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDGTE applies the GTE predicate on the "google_event_id" field.
+func GoogleEventIDGTE(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldGTE(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDLT applies the LT predicate on the "google_event_id" field.
+func GoogleEventIDLT(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldLT(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDLTE applies the LTE predicate on the "google_event_id" field.
+func GoogleEventIDLTE(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldLTE(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDContains applies the Contains predicate on the "google_event_id" field.
+func GoogleEventIDContains(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldContains(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDHasPrefix applies the HasPrefix predicate on the "google_event_id" field.
+func GoogleEventIDHasPrefix(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldHasPrefix(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDHasSuffix applies the HasSuffix predicate on the "google_event_id" field.
+func GoogleEventIDHasSuffix(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldHasSuffix(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDEqualFold applies the EqualFold predicate on the "google_event_id" field.
+func GoogleEventIDEqualFold(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldEqualFold(FieldGoogleEventID, v))
+}
+
+// GoogleEventIDContainsFold applies the ContainsFold predicate on the "google_event_id" field.
+func GoogleEventIDContainsFold(v string) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldContainsFold(FieldGoogleEventID, v))
+}
+
+// SyncPendingEQ applies the EQ predicate on the "sync_pending" field.
+func SyncPendingEQ(v bool) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldEQ(FieldSyncPending, v))
+}
+
+// SyncPendingNEQ applies the NEQ predicate on the "sync_pending" field.
+func SyncPendingNEQ(v bool) predicate.CalendarEvent {
+	return predicate.CalendarEvent(sql.FieldNEQ(FieldSyncPending, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

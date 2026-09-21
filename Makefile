@@ -90,6 +90,10 @@ check-op: ## 1Password 参照が解決できるか確認（秘密はマスク）
 	@echo "DEEPSEEK_API_KEY = $$(op read 'op://Development/CalendarRabbit/DEEPSEEK_API_KEY' | sed 's/./*/g')"
 	@echo "SEARCH_API_KEY   = $$(op read 'op://Development/CalendarRabbit/SEARCH_API_KEY' | sed 's/./*/g')"
 	@echo "CLAUDE_API_KEY   = $$(op read 'op://Development/CalendarRabbit/CLAUDE_API_KEY' | sed 's/./*/g')"
+	@echo "GOOGLE_OAUTH_CLIENT_ID     = $$(op read 'op://Development/CalendarRabbit/GOOGLE_OAUTH_CLIENT_ID')"
+	@echo "GOOGLE_OAUTH_REDIRECT_URL  = $$(op read 'op://Development/CalendarRabbit/GOOGLE_OAUTH_REDIRECT_URL')"
+	@echo "GOOGLE_OAUTH_CLIENT_SECRET = $$(op read 'op://Development/CalendarRabbit/GOOGLE_OAUTH_CLIENT_SECRET' | sed 's/./*/g')"
+	@echo "GOOGLE_TOKEN_ENC_KEY       = $$(op read 'op://Development/CalendarRabbit/GOOGLE_TOKEN_ENC_KEY' | sed 's/./*/g')"
 
 .PHONY: mysql
 mysql: ## MySQL に接続（コンテナ内 mysql クライアント）

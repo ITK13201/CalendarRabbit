@@ -27,6 +27,12 @@ func (CalendarEvent) Fields() []ent.Field {
 			Default(""),
 		field.String("source_url").
 			Default(""),
+		// google_event_id は専用カレンダー上の対応イベントID（未同期・未連携時は空）。
+		field.String("google_event_id").
+			Default(""),
+		// sync_pending は Google への同期が未完了（失敗または未実行）であることを示す。
+		field.Bool("sync_pending").
+			Default(false),
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),

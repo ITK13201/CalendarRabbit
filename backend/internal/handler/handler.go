@@ -5,11 +5,15 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/ITK13201/CalendarRabbit/backend/internal/domain/derr"
 	"github.com/gin-gonic/gin"
 )
+
+// defaultGoogleRedirect は連携コールバック後に戻すフロント URL の既定値。
+const defaultGoogleRedirect = "/"
 
 // timeRFC3339 は API 全体で使う日時フォーマット。
 const timeRFC3339 = time.RFC3339
@@ -24,7 +28,15 @@ type Handler struct {
 	calendar CalendarUseCase
 	settings SettingsUseCase
 	chat     ChatUseCase
-	logger   *slog.Logger
+	// google は Google 連携ユースケース（未設定時は nil）。
+	google GoogleUseCase
+	// googleRedirect は連携コールバック後に戻すフロント URL。
+	googleRedirect string
+	logger         *slog.Logger
+
+	// mu は使い捨ての googleState を保護する（単一ユーザー前提）。
+	mu          sync.Mutex
+	googleState string
 }
 
 // Deps は Handler の依存。
@@ -32,7 +44,11 @@ type Deps struct {
 	Calendar CalendarUseCase
 	Settings SettingsUseCase
 	Chat     ChatUseCase
-	Logger   *slog.Logger
+	// Google は Google 連携ユースケース（未設定時は nil を渡す）。
+	Google GoogleUseCase
+	// GoogleRedirect は連携コールバック後に戻すフロント URL（空なら "/"）。
+	GoogleRedirect string
+	Logger         *slog.Logger
 }
 
 // New は Handler を生成する。
@@ -41,11 +57,17 @@ func New(deps Deps) *Handler {
 	if logger == nil {
 		logger = slog.Default()
 	}
+	redirect := deps.GoogleRedirect
+	if redirect == "" {
+		redirect = defaultGoogleRedirect
+	}
 	return &Handler{
-		calendar: deps.Calendar,
-		settings: deps.Settings,
-		chat:     deps.Chat,
-		logger:   logger,
+		calendar:       deps.Calendar,
+		settings:       deps.Settings,
+		chat:           deps.Chat,
+		google:         deps.Google,
+		googleRedirect: redirect,
+		logger:         logger,
 	}
 }
 

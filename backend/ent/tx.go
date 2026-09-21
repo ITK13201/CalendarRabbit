@@ -20,6 +20,8 @@ type Tx struct {
 	Conversation *ConversationClient
 	// EventProposal is the client for interacting with the EventProposal builders.
 	EventProposal *EventProposalClient
+	// GoogleConnection is the client for interacting with the GoogleConnection builders.
+	GoogleConnection *GoogleConnectionClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 
@@ -157,6 +159,7 @@ func (tx *Tx) init() {
 	tx.CalendarEvent = NewCalendarEventClient(tx.config)
 	tx.Conversation = NewConversationClient(tx.config)
 	tx.EventProposal = NewEventProposalClient(tx.config)
+	tx.GoogleConnection = NewGoogleConnectionClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 }
 

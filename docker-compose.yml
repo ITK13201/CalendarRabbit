@@ -45,6 +45,11 @@ services:
       # Claude は切り戻し用。既定はダミー（LLM_PROVIDER=claude 時のみ実キーを注入）。
       CLAUDE_API_KEY: ${CLAUDE_API_KEY:-dummy-claude-api-key}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      # Google Calendar 連携（任意機能）。未設定なら連携は休眠し DB のみで動作する。
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+      GOOGLE_OAUTH_REDIRECT_URL: ${GOOGLE_OAUTH_REDIRECT_URL:-http://localhost:8080/api/google/callback}
+      GOOGLE_TOKEN_ENC_KEY: ${GOOGLE_TOKEN_ENC_KEY:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:8081}
     ports:
       - "8080:8080"

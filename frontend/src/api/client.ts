@@ -4,6 +4,9 @@ import type {
   ConversationResponse,
   EventInput,
   EventProposal,
+  GoogleAuthURL,
+  GoogleResyncResult,
+  GoogleStatus,
   LLMProvider,
   SendMessageResponse,
 } from './types'
@@ -90,5 +93,21 @@ export const api = {
       method: 'PUT',
       body: JSON.stringify({ timezone, llm_provider: llmProvider }),
     })
+  },
+
+  // google calendar sync
+  getGoogleStatus(): Promise<GoogleStatus> {
+    return request<GoogleStatus>('/google/status')
+  },
+  getGoogleAuthURL(): Promise<GoogleAuthURL> {
+    return request<GoogleAuthURL>('/google/auth')
+  },
+  disconnectGoogle(deleteCalendar: boolean): Promise<void> {
+    return request<void>(`/google/connection?delete_calendar=${deleteCalendar ? 'true' : 'false'}`, {
+      method: 'DELETE',
+    })
+  },
+  resyncGoogle(): Promise<GoogleResyncResult> {
+    return request<GoogleResyncResult>('/google/resync', { method: 'POST' })
   },
 }
