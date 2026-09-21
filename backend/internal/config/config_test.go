@@ -130,6 +130,46 @@ func TestLoad_CustomModel(t *testing.T) {
 	assert.Equal(t, "9090", cfg.Port)
 }
 
+func TestLoad_GoogleSyncUnsetIsOptional(t *testing.T) {
+	setRequiredEnv(t)
+	// Google 系を明示的に未設定にしても Load は成功する（連携は任意機能）。
+	t.Setenv("GOOGLE_OAUTH_CLIENT_ID", "")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+	t.Setenv("GOOGLE_OAUTH_REDIRECT_URL", "")
+	t.Setenv("GOOGLE_TOKEN_ENC_KEY", "")
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	assert.False(t, cfg.GoogleSyncEnabled())
+}
+
+func TestLoad_GoogleSyncEnabledWhenAllSet(t *testing.T) {
+	setRequiredEnv(t)
+	t.Setenv("GOOGLE_OAUTH_CLIENT_ID", "client-id")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_SECRET", "client-secret")
+	t.Setenv("GOOGLE_OAUTH_REDIRECT_URL", "http://localhost:8080/api/google/callback")
+	t.Setenv("GOOGLE_TOKEN_ENC_KEY", "enc-key")
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	assert.True(t, cfg.GoogleSyncEnabled())
+	assert.Equal(t, "client-id", cfg.GoogleOAuthClientID)
+	assert.Equal(t, "http://localhost:8080/api/google/callback", cfg.GoogleOAuthRedirectURL)
+}
+
+func TestLoad_GoogleSyncPartialIsDisabled(t *testing.T) {
+	setRequiredEnv(t)
+	// 一部のみ設定された場合は「未設定」とみなす。
+	t.Setenv("GOOGLE_OAUTH_CLIENT_ID", "client-id")
+	t.Setenv("GOOGLE_OAUTH_CLIENT_SECRET", "")
+	t.Setenv("GOOGLE_OAUTH_REDIRECT_URL", "")
+	t.Setenv("GOOGLE_TOKEN_ENC_KEY", "")
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	assert.False(t, cfg.GoogleSyncEnabled())
+}
+
 func TestDSN(t *testing.T) {
 	setRequiredEnv(t)
 	cfg, err := Load()

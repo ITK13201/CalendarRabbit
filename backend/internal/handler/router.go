@@ -53,4 +53,13 @@ func (h *Handler) registerRoutes(engine *gin.Engine) {
 		chat.POST("/proposals/:id/approve", h.ApproveProposal)
 		chat.POST("/proposals/:id/reject", h.RejectProposal)
 	}
+
+	google := api.Group("/google")
+	{
+		google.GET("/auth", h.GoogleAuth)
+		google.GET("/callback", h.GoogleCallback)
+		google.GET("/status", h.GoogleStatus)
+		google.DELETE("/connection", h.GoogleDisconnect)
+		google.POST("/resync", h.GoogleResync)
+	}
 }

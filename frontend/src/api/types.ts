@@ -84,3 +84,20 @@ export interface ApiError {
   error: string
   field?: string
 }
+
+// Google Calendar 連携の状態。configured=false のとき機能は休眠（UI 非表示）。
+export interface GoogleStatus {
+  configured: boolean
+  connected: boolean
+  // needs_reconnect: トークン失効や専用カレンダー消失で未連携相当へ落ちており再連携が必要。
+  needs_reconnect: boolean
+  pending_count: number
+}
+
+export interface GoogleAuthURL {
+  auth_url: string
+}
+
+export interface GoogleResyncResult {
+  pending_count: number
+}

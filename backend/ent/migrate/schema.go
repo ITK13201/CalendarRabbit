@@ -31,6 +31,8 @@ var (
 		{Name: "location", Type: field.TypeString, Default: ""},
 		{Name: "description", Type: field.TypeString, Size: 2147483647, Default: ""},
 		{Name: "source_url", Type: field.TypeString, Default: ""},
+		{Name: "google_event_id", Type: field.TypeString, Default: ""},
+		{Name: "sync_pending", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -95,6 +97,23 @@ var (
 			},
 		},
 	}
+	// GoogleConnectionsColumns holds the columns for the "google_connections" table.
+	GoogleConnectionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "refresh_token", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "access_token", Type: field.TypeString, Size: 2147483647, Default: ""},
+		{Name: "token_expiry", Type: field.TypeTime, Nullable: true},
+		{Name: "calendar_id", Type: field.TypeString, Default: ""},
+		{Name: "connected", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// GoogleConnectionsTable holds the schema information for the "google_connections" table.
+	GoogleConnectionsTable = &schema.Table{
+		Name:       "google_connections",
+		Columns:    GoogleConnectionsColumns,
+		PrimaryKey: []*schema.Column{GoogleConnectionsColumns[0]},
+	}
 	// MessagesColumns holds the columns for the "messages" table.
 	MessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -123,6 +142,7 @@ var (
 		CalendarEventsTable,
 		ConversationsTable,
 		EventProposalsTable,
+		GoogleConnectionsTable,
 		MessagesTable,
 	}
 )

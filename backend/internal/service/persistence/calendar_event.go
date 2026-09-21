@@ -131,18 +131,73 @@ func (r *CalendarEventRepository) List(ctx context.Context) (res []*entity.Calen
 	return mapCalendarEvents(rows), nil
 }
 
+// SetGoogleMapping はイベントの Google 同期状態（対応イベントID・未同期フラグ）を更新する。
+// ミラー同期の結果反映に用いる。
+func (r *CalendarEventRepository) SetGoogleMapping(ctx context.Context, id int, googleEventID string, syncPending bool) (err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.SetGoogleMapping",
+		logging.Args{"id": id, "googleEventID": googleEventID, "syncPending": syncPending}, nil, &err)()
+
+	err = r.client.CalendarEvent.UpdateOneID(id).
+		SetGoogleEventID(googleEventID).
+		SetSyncPending(syncPending).
+		Exec(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return derr.ErrNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+// ListPending は未同期（sync_pending=true）のイベントを開始日時順で返す。
+func (r *CalendarEventRepository) ListPending(ctx context.Context) (res []*entity.CalendarEvent, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.ListPending", nil, &res, &err)()
+
+	rows, err := r.client.CalendarEvent.Query().
+		Where(calendarevent.SyncPending(true)).
+		Order(ent.Asc(calendarevent.FieldStartsAt)).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return mapCalendarEvents(rows), nil
+}
+
+// ClearAllGoogleMappings は全イベントの Google 同期状態を初期化する（連携解除時に用いる）。
+func (r *CalendarEventRepository) ClearAllGoogleMappings(ctx context.Context) (err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.ClearAllGoogleMappings", nil, nil, &err)()
+
+	_, err = r.client.CalendarEvent.Update().
+		SetGoogleEventID("").
+		SetSyncPending(false).
+		Save(ctx)
+	return err
+}
+
+// CountPending は未同期イベント数を返す。
+func (r *CalendarEventRepository) CountPending(ctx context.Context) (res int, err error) {
+	defer logging.Trace(ctx, r.logger, "persistence.CalendarEventRepository.CountPending", nil, &res, &err)()
+
+	return r.client.CalendarEvent.Query().
+		Where(calendarevent.SyncPending(true)).
+		Count(ctx)
+}
+
 func mapCalendarEvent(row *ent.CalendarEvent) *entity.CalendarEvent {
 	return &entity.CalendarEvent{
-		ID:          row.ID,
-		Title:       row.Title,
-		StartsAt:    row.StartsAt.UTC(),
-		EndsAt:      row.EndsAt.UTC(),
-		AllDay:      row.AllDay,
-		Location:    row.Location,
-		Description: row.Description,
-		SourceURL:   row.SourceURL,
-		CreatedAt:   row.CreatedAt.UTC(),
-		UpdatedAt:   row.UpdatedAt.UTC(),
+		ID:            row.ID,
+		Title:         row.Title,
+		StartsAt:      row.StartsAt.UTC(),
+		EndsAt:        row.EndsAt.UTC(),
+		AllDay:        row.AllDay,
+		Location:      row.Location,
+		Description:   row.Description,
+		SourceURL:     row.SourceURL,
+		GoogleEventID: row.GoogleEventID,
+		SyncPending:   row.SyncPending,
+		CreatedAt:     row.CreatedAt.UTC(),
+		UpdatedAt:     row.UpdatedAt.UTC(),
 	}
 }
 

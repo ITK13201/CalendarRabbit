@@ -82,6 +82,28 @@ definitions:
       updated_at:
         type: string
     type: object
+  handler.googleAuthResponse:
+    properties:
+      auth_url:
+        type: string
+    type: object
+  handler.googleResyncResponse:
+    properties:
+      pending_count:
+        type: integer
+    type: object
+  handler.googleStatusResponse:
+    properties:
+      configured:
+        type: boolean
+      connected:
+        type: boolean
+      needs_reconnect:
+        description: NeedsReconnect はトークン失効やカレンダー消失で未連携相当へ落ちており再連携が必要な状態。
+        type: boolean
+      pending_count:
+        type: integer
+    type: object
   handler.messageResponse:
     properties:
       content:
@@ -394,6 +416,87 @@ paths:
       summary: 予定案を却下する
       tags:
       - chat
+  /api/google/auth:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.googleAuthResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Google 連携の認可URLを返す
+      tags:
+      - google
+  /api/google/callback:
+    get:
+      parameters:
+      - description: CSRF state
+        in: query
+        name: state
+        required: true
+        type: string
+      - description: 認可コード
+        in: query
+        name: code
+        type: string
+      responses:
+        "302":
+          description: Found
+      summary: Google 認可コールバック（トークン交換して連携を確立し設定画面へ戻す）
+      tags:
+      - google
+  /api/google/connection:
+    delete:
+      parameters:
+      - description: 専用カレンダーごと削除するか（既定 false=残す）
+        in: query
+        name: delete_calendar
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: Google 連携を解除する（専用カレンダーの削除/保持を選択）
+      tags:
+      - google
+  /api/google/resync:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.googleResyncResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      summary: 未同期イベントを手動で再同期する
+      tags:
+      - google
+  /api/google/status:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.googleStatusResponse'
+      summary: Google 連携状態を取得する（未同期件数を含む）
+      tags:
+      - google
   /api/health:
     get:
       produces:

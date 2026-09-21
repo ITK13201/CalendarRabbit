@@ -18,5 +18,8 @@ type Conversation func(*sql.Selector)
 // EventProposal is the predicate function for eventproposal builders.
 type EventProposal func(*sql.Selector)
 
+// GoogleConnection is the predicate function for googleconnection builders.
+type GoogleConnection func(*sql.Selector)
+
 // Message is the predicate function for message builders.
 type Message func(*sql.Selector)

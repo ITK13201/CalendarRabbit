@@ -16,6 +16,7 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/ent/calendarevent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/conversation"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/eventproposal"
+	"github.com/ITK13201/CalendarRabbit/backend/ent/googleconnection"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/message"
 )
 
@@ -77,11 +78,12 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			appsetting.Table:    appsetting.ValidColumn,
-			calendarevent.Table: calendarevent.ValidColumn,
-			conversation.Table:  conversation.ValidColumn,
-			eventproposal.Table: eventproposal.ValidColumn,
-			message.Table:       message.ValidColumn,
+			appsetting.Table:       appsetting.ValidColumn,
+			calendarevent.Table:    calendarevent.ValidColumn,
+			conversation.Table:     conversation.ValidColumn,
+			eventproposal.Table:    eventproposal.ValidColumn,
+			googleconnection.Table: googleconnection.ValidColumn,
+			message.Table:          message.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

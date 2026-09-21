@@ -19,6 +19,7 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/ent/calendarevent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/conversation"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/eventproposal"
+	"github.com/ITK13201/CalendarRabbit/backend/ent/googleconnection"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/message"
 )
 
@@ -35,6 +36,8 @@ type Client struct {
 	Conversation *ConversationClient
 	// EventProposal is the client for interacting with the EventProposal builders.
 	EventProposal *EventProposalClient
+	// GoogleConnection is the client for interacting with the GoogleConnection builders.
+	GoogleConnection *GoogleConnectionClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
 }
@@ -52,6 +55,7 @@ func (c *Client) init() {
 	c.CalendarEvent = NewCalendarEventClient(c.config)
 	c.Conversation = NewConversationClient(c.config)
 	c.EventProposal = NewEventProposalClient(c.config)
+	c.GoogleConnection = NewGoogleConnectionClient(c.config)
 	c.Message = NewMessageClient(c.config)
 }
 
@@ -143,13 +147,14 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		AppSetting:    NewAppSettingClient(cfg),
-		CalendarEvent: NewCalendarEventClient(cfg),
-		Conversation:  NewConversationClient(cfg),
-		EventProposal: NewEventProposalClient(cfg),
-		Message:       NewMessageClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		AppSetting:       NewAppSettingClient(cfg),
+		CalendarEvent:    NewCalendarEventClient(cfg),
+		Conversation:     NewConversationClient(cfg),
+		EventProposal:    NewEventProposalClient(cfg),
+		GoogleConnection: NewGoogleConnectionClient(cfg),
+		Message:          NewMessageClient(cfg),
 	}, nil
 }
 
@@ -167,13 +172,14 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:           ctx,
-		config:        cfg,
-		AppSetting:    NewAppSettingClient(cfg),
-		CalendarEvent: NewCalendarEventClient(cfg),
-		Conversation:  NewConversationClient(cfg),
-		EventProposal: NewEventProposalClient(cfg),
-		Message:       NewMessageClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		AppSetting:       NewAppSettingClient(cfg),
+		CalendarEvent:    NewCalendarEventClient(cfg),
+		Conversation:     NewConversationClient(cfg),
+		EventProposal:    NewEventProposalClient(cfg),
+		GoogleConnection: NewGoogleConnectionClient(cfg),
+		Message:          NewMessageClient(cfg),
 	}, nil
 }
 
@@ -202,21 +208,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.AppSetting.Use(hooks...)
-	c.CalendarEvent.Use(hooks...)
-	c.Conversation.Use(hooks...)
-	c.EventProposal.Use(hooks...)
-	c.Message.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.AppSetting, c.CalendarEvent, c.Conversation, c.EventProposal,
+		c.GoogleConnection, c.Message,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.AppSetting.Intercept(interceptors...)
-	c.CalendarEvent.Intercept(interceptors...)
-	c.Conversation.Intercept(interceptors...)
-	c.EventProposal.Intercept(interceptors...)
-	c.Message.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.AppSetting, c.CalendarEvent, c.Conversation, c.EventProposal,
+		c.GoogleConnection, c.Message,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -230,6 +238,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Conversation.mutate(ctx, m)
 	case *EventProposalMutation:
 		return c.EventProposal.mutate(ctx, m)
+	case *GoogleConnectionMutation:
+		return c.GoogleConnection.mutate(ctx, m)
 	case *MessageMutation:
 		return c.Message.mutate(ctx, m)
 	default:
@@ -865,6 +875,139 @@ func (c *EventProposalClient) mutate(ctx context.Context, m *EventProposalMutati
 	}
 }
 
+// GoogleConnectionClient is a client for the GoogleConnection schema.
+type GoogleConnectionClient struct {
+	config
+}
+
+// NewGoogleConnectionClient returns a client for the GoogleConnection from the given config.
+func NewGoogleConnectionClient(c config) *GoogleConnectionClient {
+	return &GoogleConnectionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `googleconnection.Hooks(f(g(h())))`.
+func (c *GoogleConnectionClient) Use(hooks ...Hook) {
+	c.hooks.GoogleConnection = append(c.hooks.GoogleConnection, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `googleconnection.Intercept(f(g(h())))`.
+func (c *GoogleConnectionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.GoogleConnection = append(c.inters.GoogleConnection, interceptors...)
+}
+
+// Create returns a builder for creating a GoogleConnection entity.
+func (c *GoogleConnectionClient) Create() *GoogleConnectionCreate {
+	mutation := newGoogleConnectionMutation(c.config, OpCreate)
+	return &GoogleConnectionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of GoogleConnection entities.
+func (c *GoogleConnectionClient) CreateBulk(builders ...*GoogleConnectionCreate) *GoogleConnectionCreateBulk {
+	return &GoogleConnectionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *GoogleConnectionClient) MapCreateBulk(slice any, setFunc func(*GoogleConnectionCreate, int)) *GoogleConnectionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &GoogleConnectionCreateBulk{err: fmt.Errorf("calling to GoogleConnectionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*GoogleConnectionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &GoogleConnectionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for GoogleConnection.
+func (c *GoogleConnectionClient) Update() *GoogleConnectionUpdate {
+	mutation := newGoogleConnectionMutation(c.config, OpUpdate)
+	return &GoogleConnectionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *GoogleConnectionClient) UpdateOne(_m *GoogleConnection) *GoogleConnectionUpdateOne {
+	mutation := newGoogleConnectionMutation(c.config, OpUpdateOne, withGoogleConnection(_m))
+	return &GoogleConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *GoogleConnectionClient) UpdateOneID(id int) *GoogleConnectionUpdateOne {
+	mutation := newGoogleConnectionMutation(c.config, OpUpdateOne, withGoogleConnectionID(id))
+	return &GoogleConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for GoogleConnection.
+func (c *GoogleConnectionClient) Delete() *GoogleConnectionDelete {
+	mutation := newGoogleConnectionMutation(c.config, OpDelete)
+	return &GoogleConnectionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *GoogleConnectionClient) DeleteOne(_m *GoogleConnection) *GoogleConnectionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *GoogleConnectionClient) DeleteOneID(id int) *GoogleConnectionDeleteOne {
+	builder := c.Delete().Where(googleconnection.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &GoogleConnectionDeleteOne{builder}
+}
+
+// Query returns a query builder for GoogleConnection.
+func (c *GoogleConnectionClient) Query() *GoogleConnectionQuery {
+	return &GoogleConnectionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeGoogleConnection},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a GoogleConnection entity by its id.
+func (c *GoogleConnectionClient) Get(ctx context.Context, id int) (*GoogleConnection, error) {
+	return c.Query().Where(googleconnection.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *GoogleConnectionClient) GetX(ctx context.Context, id int) *GoogleConnection {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *GoogleConnectionClient) Hooks() []Hook {
+	return c.hooks.GoogleConnection
+}
+
+// Interceptors returns the client interceptors.
+func (c *GoogleConnectionClient) Interceptors() []Interceptor {
+	return c.inters.GoogleConnection
+}
+
+func (c *GoogleConnectionClient) mutate(ctx context.Context, m *GoogleConnectionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&GoogleConnectionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&GoogleConnectionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&GoogleConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&GoogleConnectionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown GoogleConnection mutation op: %q", m.Op())
+	}
+}
+
 // MessageClient is a client for the Message schema.
 type MessageClient struct {
 	config
@@ -1033,10 +1176,11 @@ func (c *MessageClient) mutate(ctx context.Context, m *MessageMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AppSetting, CalendarEvent, Conversation, EventProposal, Message []ent.Hook
+		AppSetting, CalendarEvent, Conversation, EventProposal, GoogleConnection,
+		Message []ent.Hook
 	}
 	inters struct {
-		AppSetting, CalendarEvent, Conversation, EventProposal,
+		AppSetting, CalendarEvent, Conversation, EventProposal, GoogleConnection,
 		Message []ent.Interceptor
 	}
 )

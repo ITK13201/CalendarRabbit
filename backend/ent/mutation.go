@@ -15,6 +15,7 @@ import (
 	"github.com/ITK13201/CalendarRabbit/backend/ent/calendarevent"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/conversation"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/eventproposal"
+	"github.com/ITK13201/CalendarRabbit/backend/ent/googleconnection"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/message"
 	"github.com/ITK13201/CalendarRabbit/backend/ent/predicate"
 )
@@ -28,11 +29,12 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAppSetting    = "AppSetting"
-	TypeCalendarEvent = "CalendarEvent"
-	TypeConversation  = "Conversation"
-	TypeEventProposal = "EventProposal"
-	TypeMessage       = "Message"
+	TypeAppSetting       = "AppSetting"
+	TypeCalendarEvent    = "CalendarEvent"
+	TypeConversation     = "Conversation"
+	TypeEventProposal    = "EventProposal"
+	TypeGoogleConnection = "GoogleConnection"
+	TypeMessage          = "Message"
 )
 
 // AppSettingMutation represents an operation that mutates the AppSetting nodes in the graph.
@@ -482,6 +484,8 @@ type CalendarEventMutation struct {
 	location        *string
 	description     *string
 	source_url      *string
+	google_event_id *string
+	sync_pending    *bool
 	created_at      *time.Time
 	updated_at      *time.Time
 	clearedFields   map[string]struct{}
@@ -843,6 +847,78 @@ func (m *CalendarEventMutation) ResetSourceURL() {
 	m.source_url = nil
 }
 
+// SetGoogleEventID sets the "google_event_id" field.
+func (m *CalendarEventMutation) SetGoogleEventID(s string) {
+	m.google_event_id = &s
+}
+
+// GoogleEventID returns the value of the "google_event_id" field in the mutation.
+func (m *CalendarEventMutation) GoogleEventID() (r string, exists bool) {
+	v := m.google_event_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGoogleEventID returns the old "google_event_id" field's value of the CalendarEvent entity.
+// If the CalendarEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CalendarEventMutation) OldGoogleEventID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGoogleEventID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGoogleEventID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGoogleEventID: %w", err)
+	}
+	return oldValue.GoogleEventID, nil
+}
+
+// ResetGoogleEventID resets all changes to the "google_event_id" field.
+func (m *CalendarEventMutation) ResetGoogleEventID() {
+	m.google_event_id = nil
+}
+
+// SetSyncPending sets the "sync_pending" field.
+func (m *CalendarEventMutation) SetSyncPending(b bool) {
+	m.sync_pending = &b
+}
+
+// SyncPending returns the value of the "sync_pending" field in the mutation.
+func (m *CalendarEventMutation) SyncPending() (r bool, exists bool) {
+	v := m.sync_pending
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncPending returns the old "sync_pending" field's value of the CalendarEvent entity.
+// If the CalendarEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CalendarEventMutation) OldSyncPending(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncPending is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncPending requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncPending: %w", err)
+	}
+	return oldValue.SyncPending, nil
+}
+
+// ResetSyncPending resets all changes to the "sync_pending" field.
+func (m *CalendarEventMutation) ResetSyncPending() {
+	m.sync_pending = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *CalendarEventMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -1003,7 +1079,7 @@ func (m *CalendarEventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *CalendarEventMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 11)
 	if m.title != nil {
 		fields = append(fields, calendarevent.FieldTitle)
 	}
@@ -1024,6 +1100,12 @@ func (m *CalendarEventMutation) Fields() []string {
 	}
 	if m.source_url != nil {
 		fields = append(fields, calendarevent.FieldSourceURL)
+	}
+	if m.google_event_id != nil {
+		fields = append(fields, calendarevent.FieldGoogleEventID)
+	}
+	if m.sync_pending != nil {
+		fields = append(fields, calendarevent.FieldSyncPending)
 	}
 	if m.created_at != nil {
 		fields = append(fields, calendarevent.FieldCreatedAt)
@@ -1053,6 +1135,10 @@ func (m *CalendarEventMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case calendarevent.FieldSourceURL:
 		return m.SourceURL()
+	case calendarevent.FieldGoogleEventID:
+		return m.GoogleEventID()
+	case calendarevent.FieldSyncPending:
+		return m.SyncPending()
 	case calendarevent.FieldCreatedAt:
 		return m.CreatedAt()
 	case calendarevent.FieldUpdatedAt:
@@ -1080,6 +1166,10 @@ func (m *CalendarEventMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldDescription(ctx)
 	case calendarevent.FieldSourceURL:
 		return m.OldSourceURL(ctx)
+	case calendarevent.FieldGoogleEventID:
+		return m.OldGoogleEventID(ctx)
+	case calendarevent.FieldSyncPending:
+		return m.OldSyncPending(ctx)
 	case calendarevent.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case calendarevent.FieldUpdatedAt:
@@ -1141,6 +1231,20 @@ func (m *CalendarEventMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSourceURL(v)
+		return nil
+	case calendarevent.FieldGoogleEventID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGoogleEventID(v)
+		return nil
+	case calendarevent.FieldSyncPending:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncPending(v)
 		return nil
 	case calendarevent.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1225,6 +1329,12 @@ func (m *CalendarEventMutation) ResetField(name string) error {
 		return nil
 	case calendarevent.FieldSourceURL:
 		m.ResetSourceURL()
+		return nil
+	case calendarevent.FieldGoogleEventID:
+		m.ResetGoogleEventID()
+		return nil
+	case calendarevent.FieldSyncPending:
+		m.ResetSyncPending()
 		return nil
 	case calendarevent.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -2871,6 +2981,678 @@ func (m *EventProposalMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown EventProposal edge %s", name)
+}
+
+// GoogleConnectionMutation represents an operation that mutates the GoogleConnection nodes in the graph.
+type GoogleConnectionMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	refresh_token *string
+	access_token  *string
+	token_expiry  *time.Time
+	calendar_id   *string
+	connected     *bool
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*GoogleConnection, error)
+	predicates    []predicate.GoogleConnection
+}
+
+var _ ent.Mutation = (*GoogleConnectionMutation)(nil)
+
+// googleconnectionOption allows management of the mutation configuration using functional options.
+type googleconnectionOption func(*GoogleConnectionMutation)
+
+// newGoogleConnectionMutation creates new mutation for the GoogleConnection entity.
+func newGoogleConnectionMutation(c config, op Op, opts ...googleconnectionOption) *GoogleConnectionMutation {
+	m := &GoogleConnectionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeGoogleConnection,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withGoogleConnectionID sets the ID field of the mutation.
+func withGoogleConnectionID(id int) googleconnectionOption {
+	return func(m *GoogleConnectionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *GoogleConnection
+		)
+		m.oldValue = func(ctx context.Context) (*GoogleConnection, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().GoogleConnection.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withGoogleConnection sets the old GoogleConnection of the mutation.
+func withGoogleConnection(node *GoogleConnection) googleconnectionOption {
+	return func(m *GoogleConnectionMutation) {
+		m.oldValue = func(context.Context) (*GoogleConnection, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m GoogleConnectionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m GoogleConnectionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *GoogleConnectionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *GoogleConnectionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().GoogleConnection.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetRefreshToken sets the "refresh_token" field.
+func (m *GoogleConnectionMutation) SetRefreshToken(s string) {
+	m.refresh_token = &s
+}
+
+// RefreshToken returns the value of the "refresh_token" field in the mutation.
+func (m *GoogleConnectionMutation) RefreshToken() (r string, exists bool) {
+	v := m.refresh_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRefreshToken returns the old "refresh_token" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldRefreshToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRefreshToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRefreshToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRefreshToken: %w", err)
+	}
+	return oldValue.RefreshToken, nil
+}
+
+// ResetRefreshToken resets all changes to the "refresh_token" field.
+func (m *GoogleConnectionMutation) ResetRefreshToken() {
+	m.refresh_token = nil
+}
+
+// SetAccessToken sets the "access_token" field.
+func (m *GoogleConnectionMutation) SetAccessToken(s string) {
+	m.access_token = &s
+}
+
+// AccessToken returns the value of the "access_token" field in the mutation.
+func (m *GoogleConnectionMutation) AccessToken() (r string, exists bool) {
+	v := m.access_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccessToken returns the old "access_token" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldAccessToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccessToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccessToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccessToken: %w", err)
+	}
+	return oldValue.AccessToken, nil
+}
+
+// ResetAccessToken resets all changes to the "access_token" field.
+func (m *GoogleConnectionMutation) ResetAccessToken() {
+	m.access_token = nil
+}
+
+// SetTokenExpiry sets the "token_expiry" field.
+func (m *GoogleConnectionMutation) SetTokenExpiry(t time.Time) {
+	m.token_expiry = &t
+}
+
+// TokenExpiry returns the value of the "token_expiry" field in the mutation.
+func (m *GoogleConnectionMutation) TokenExpiry() (r time.Time, exists bool) {
+	v := m.token_expiry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTokenExpiry returns the old "token_expiry" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldTokenExpiry(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTokenExpiry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTokenExpiry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTokenExpiry: %w", err)
+	}
+	return oldValue.TokenExpiry, nil
+}
+
+// ClearTokenExpiry clears the value of the "token_expiry" field.
+func (m *GoogleConnectionMutation) ClearTokenExpiry() {
+	m.token_expiry = nil
+	m.clearedFields[googleconnection.FieldTokenExpiry] = struct{}{}
+}
+
+// TokenExpiryCleared returns if the "token_expiry" field was cleared in this mutation.
+func (m *GoogleConnectionMutation) TokenExpiryCleared() bool {
+	_, ok := m.clearedFields[googleconnection.FieldTokenExpiry]
+	return ok
+}
+
+// ResetTokenExpiry resets all changes to the "token_expiry" field.
+func (m *GoogleConnectionMutation) ResetTokenExpiry() {
+	m.token_expiry = nil
+	delete(m.clearedFields, googleconnection.FieldTokenExpiry)
+}
+
+// SetCalendarID sets the "calendar_id" field.
+func (m *GoogleConnectionMutation) SetCalendarID(s string) {
+	m.calendar_id = &s
+}
+
+// CalendarID returns the value of the "calendar_id" field in the mutation.
+func (m *GoogleConnectionMutation) CalendarID() (r string, exists bool) {
+	v := m.calendar_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCalendarID returns the old "calendar_id" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldCalendarID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCalendarID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCalendarID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCalendarID: %w", err)
+	}
+	return oldValue.CalendarID, nil
+}
+
+// ResetCalendarID resets all changes to the "calendar_id" field.
+func (m *GoogleConnectionMutation) ResetCalendarID() {
+	m.calendar_id = nil
+}
+
+// SetConnected sets the "connected" field.
+func (m *GoogleConnectionMutation) SetConnected(b bool) {
+	m.connected = &b
+}
+
+// Connected returns the value of the "connected" field in the mutation.
+func (m *GoogleConnectionMutation) Connected() (r bool, exists bool) {
+	v := m.connected
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConnected returns the old "connected" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldConnected(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConnected is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConnected requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConnected: %w", err)
+	}
+	return oldValue.Connected, nil
+}
+
+// ResetConnected resets all changes to the "connected" field.
+func (m *GoogleConnectionMutation) ResetConnected() {
+	m.connected = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *GoogleConnectionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *GoogleConnectionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *GoogleConnectionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *GoogleConnectionMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *GoogleConnectionMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the GoogleConnection entity.
+// If the GoogleConnection object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GoogleConnectionMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *GoogleConnectionMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the GoogleConnectionMutation builder.
+func (m *GoogleConnectionMutation) Where(ps ...predicate.GoogleConnection) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the GoogleConnectionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *GoogleConnectionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.GoogleConnection, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *GoogleConnectionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *GoogleConnectionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (GoogleConnection).
+func (m *GoogleConnectionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *GoogleConnectionMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.refresh_token != nil {
+		fields = append(fields, googleconnection.FieldRefreshToken)
+	}
+	if m.access_token != nil {
+		fields = append(fields, googleconnection.FieldAccessToken)
+	}
+	if m.token_expiry != nil {
+		fields = append(fields, googleconnection.FieldTokenExpiry)
+	}
+	if m.calendar_id != nil {
+		fields = append(fields, googleconnection.FieldCalendarID)
+	}
+	if m.connected != nil {
+		fields = append(fields, googleconnection.FieldConnected)
+	}
+	if m.created_at != nil {
+		fields = append(fields, googleconnection.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, googleconnection.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *GoogleConnectionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case googleconnection.FieldRefreshToken:
+		return m.RefreshToken()
+	case googleconnection.FieldAccessToken:
+		return m.AccessToken()
+	case googleconnection.FieldTokenExpiry:
+		return m.TokenExpiry()
+	case googleconnection.FieldCalendarID:
+		return m.CalendarID()
+	case googleconnection.FieldConnected:
+		return m.Connected()
+	case googleconnection.FieldCreatedAt:
+		return m.CreatedAt()
+	case googleconnection.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *GoogleConnectionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case googleconnection.FieldRefreshToken:
+		return m.OldRefreshToken(ctx)
+	case googleconnection.FieldAccessToken:
+		return m.OldAccessToken(ctx)
+	case googleconnection.FieldTokenExpiry:
+		return m.OldTokenExpiry(ctx)
+	case googleconnection.FieldCalendarID:
+		return m.OldCalendarID(ctx)
+	case googleconnection.FieldConnected:
+		return m.OldConnected(ctx)
+	case googleconnection.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case googleconnection.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown GoogleConnection field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GoogleConnectionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case googleconnection.FieldRefreshToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRefreshToken(v)
+		return nil
+	case googleconnection.FieldAccessToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccessToken(v)
+		return nil
+	case googleconnection.FieldTokenExpiry:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTokenExpiry(v)
+		return nil
+	case googleconnection.FieldCalendarID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCalendarID(v)
+		return nil
+	case googleconnection.FieldConnected:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConnected(v)
+		return nil
+	case googleconnection.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case googleconnection.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleConnection field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *GoogleConnectionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *GoogleConnectionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *GoogleConnectionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown GoogleConnection numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *GoogleConnectionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(googleconnection.FieldTokenExpiry) {
+		fields = append(fields, googleconnection.FieldTokenExpiry)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *GoogleConnectionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *GoogleConnectionMutation) ClearField(name string) error {
+	switch name {
+	case googleconnection.FieldTokenExpiry:
+		m.ClearTokenExpiry()
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleConnection nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *GoogleConnectionMutation) ResetField(name string) error {
+	switch name {
+	case googleconnection.FieldRefreshToken:
+		m.ResetRefreshToken()
+		return nil
+	case googleconnection.FieldAccessToken:
+		m.ResetAccessToken()
+		return nil
+	case googleconnection.FieldTokenExpiry:
+		m.ResetTokenExpiry()
+		return nil
+	case googleconnection.FieldCalendarID:
+		m.ResetCalendarID()
+		return nil
+	case googleconnection.FieldConnected:
+		m.ResetConnected()
+		return nil
+	case googleconnection.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case googleconnection.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown GoogleConnection field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *GoogleConnectionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *GoogleConnectionMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *GoogleConnectionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *GoogleConnectionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *GoogleConnectionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *GoogleConnectionMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *GoogleConnectionMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown GoogleConnection unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *GoogleConnectionMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown GoogleConnection edge %s", name)
 }
 
 // MessageMutation represents an operation that mutates the Message nodes in the graph.

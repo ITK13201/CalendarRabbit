@@ -95,6 +95,34 @@ func (_c *CalendarEventCreate) SetNillableSourceURL(v *string) *CalendarEventCre
 	return _c
 }
 
+// SetGoogleEventID sets the "google_event_id" field.
+func (_c *CalendarEventCreate) SetGoogleEventID(v string) *CalendarEventCreate {
+	_c.mutation.SetGoogleEventID(v)
+	return _c
+}
+
+// SetNillableGoogleEventID sets the "google_event_id" field if the given value is not nil.
+func (_c *CalendarEventCreate) SetNillableGoogleEventID(v *string) *CalendarEventCreate {
+	if v != nil {
+		_c.SetGoogleEventID(*v)
+	}
+	return _c
+}
+
+// SetSyncPending sets the "sync_pending" field.
+func (_c *CalendarEventCreate) SetSyncPending(v bool) *CalendarEventCreate {
+	_c.mutation.SetSyncPending(v)
+	return _c
+}
+
+// SetNillableSyncPending sets the "sync_pending" field if the given value is not nil.
+func (_c *CalendarEventCreate) SetNillableSyncPending(v *bool) *CalendarEventCreate {
+	if v != nil {
+		_c.SetSyncPending(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *CalendarEventCreate) SetCreatedAt(v time.Time) *CalendarEventCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -189,6 +217,14 @@ func (_c *CalendarEventCreate) defaults() {
 		v := calendarevent.DefaultSourceURL
 		_c.mutation.SetSourceURL(v)
 	}
+	if _, ok := _c.mutation.GoogleEventID(); !ok {
+		v := calendarevent.DefaultGoogleEventID
+		_c.mutation.SetGoogleEventID(v)
+	}
+	if _, ok := _c.mutation.SyncPending(); !ok {
+		v := calendarevent.DefaultSyncPending
+		_c.mutation.SetSyncPending(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := calendarevent.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -226,6 +262,12 @@ func (_c *CalendarEventCreate) check() error {
 	}
 	if _, ok := _c.mutation.SourceURL(); !ok {
 		return &ValidationError{Name: "source_url", err: errors.New(`ent: missing required field "CalendarEvent.source_url"`)}
+	}
+	if _, ok := _c.mutation.GoogleEventID(); !ok {
+		return &ValidationError{Name: "google_event_id", err: errors.New(`ent: missing required field "CalendarEvent.google_event_id"`)}
+	}
+	if _, ok := _c.mutation.SyncPending(); !ok {
+		return &ValidationError{Name: "sync_pending", err: errors.New(`ent: missing required field "CalendarEvent.sync_pending"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "CalendarEvent.created_at"`)}
@@ -286,6 +328,14 @@ func (_c *CalendarEventCreate) createSpec() (*CalendarEvent, *sqlgraph.CreateSpe
 	if value, ok := _c.mutation.SourceURL(); ok {
 		_spec.SetField(calendarevent.FieldSourceURL, field.TypeString, value)
 		_node.SourceURL = value
+	}
+	if value, ok := _c.mutation.GoogleEventID(); ok {
+		_spec.SetField(calendarevent.FieldGoogleEventID, field.TypeString, value)
+		_node.GoogleEventID = value
+	}
+	if value, ok := _c.mutation.SyncPending(); ok {
+		_spec.SetField(calendarevent.FieldSyncPending, field.TypeBool, value)
+		_node.SyncPending = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(calendarevent.FieldCreatedAt, field.TypeTime, value)

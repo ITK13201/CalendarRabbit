@@ -65,8 +65,25 @@ type CalendarEvent struct {
 	Location    string
 	Description string
 	SourceURL   string
+	// GoogleEventID は専用カレンダー上の対応イベントID（未同期・未連携時は空）。
+	GoogleEventID string
+	// SyncPending は Google への同期が未完了であることを示す。
+	SyncPending bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+// GoogleConnection は Google Calendar 連携の状態（単一レコード）。
+// RefreshToken は復号済みの平文（永続化時は暗号化される）。
+type GoogleConnection struct {
+	ID           int
+	RefreshToken string
+	AccessToken  string
+	TokenExpiry  time.Time
+	CalendarID   string
+	Connected    bool
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // AppSetting はアプリ設定（単一レコード）。

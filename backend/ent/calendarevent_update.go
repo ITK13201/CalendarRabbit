@@ -127,6 +127,34 @@ func (_u *CalendarEventUpdate) SetNillableSourceURL(v *string) *CalendarEventUpd
 	return _u
 }
 
+// SetGoogleEventID sets the "google_event_id" field.
+func (_u *CalendarEventUpdate) SetGoogleEventID(v string) *CalendarEventUpdate {
+	_u.mutation.SetGoogleEventID(v)
+	return _u
+}
+
+// SetNillableGoogleEventID sets the "google_event_id" field if the given value is not nil.
+func (_u *CalendarEventUpdate) SetNillableGoogleEventID(v *string) *CalendarEventUpdate {
+	if v != nil {
+		_u.SetGoogleEventID(*v)
+	}
+	return _u
+}
+
+// SetSyncPending sets the "sync_pending" field.
+func (_u *CalendarEventUpdate) SetSyncPending(v bool) *CalendarEventUpdate {
+	_u.mutation.SetSyncPending(v)
+	return _u
+}
+
+// SetNillableSyncPending sets the "sync_pending" field if the given value is not nil.
+func (_u *CalendarEventUpdate) SetNillableSyncPending(v *bool) *CalendarEventUpdate {
+	if v != nil {
+		_u.SetSyncPending(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *CalendarEventUpdate) SetUpdatedAt(v time.Time) *CalendarEventUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -252,6 +280,12 @@ func (_u *CalendarEventUpdate) sqlSave(ctx context.Context) (_node int, err erro
 	}
 	if value, ok := _u.mutation.SourceURL(); ok {
 		_spec.SetField(calendarevent.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.GoogleEventID(); ok {
+		_spec.SetField(calendarevent.FieldGoogleEventID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SyncPending(); ok {
+		_spec.SetField(calendarevent.FieldSyncPending, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(calendarevent.FieldUpdatedAt, field.TypeTime, value)
@@ -419,6 +453,34 @@ func (_u *CalendarEventUpdateOne) SetNillableSourceURL(v *string) *CalendarEvent
 	return _u
 }
 
+// SetGoogleEventID sets the "google_event_id" field.
+func (_u *CalendarEventUpdateOne) SetGoogleEventID(v string) *CalendarEventUpdateOne {
+	_u.mutation.SetGoogleEventID(v)
+	return _u
+}
+
+// SetNillableGoogleEventID sets the "google_event_id" field if the given value is not nil.
+func (_u *CalendarEventUpdateOne) SetNillableGoogleEventID(v *string) *CalendarEventUpdateOne {
+	if v != nil {
+		_u.SetGoogleEventID(*v)
+	}
+	return _u
+}
+
+// SetSyncPending sets the "sync_pending" field.
+func (_u *CalendarEventUpdateOne) SetSyncPending(v bool) *CalendarEventUpdateOne {
+	_u.mutation.SetSyncPending(v)
+	return _u
+}
+
+// SetNillableSyncPending sets the "sync_pending" field if the given value is not nil.
+func (_u *CalendarEventUpdateOne) SetNillableSyncPending(v *bool) *CalendarEventUpdateOne {
+	if v != nil {
+		_u.SetSyncPending(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *CalendarEventUpdateOne) SetUpdatedAt(v time.Time) *CalendarEventUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -574,6 +636,12 @@ func (_u *CalendarEventUpdateOne) sqlSave(ctx context.Context) (_node *CalendarE
 	}
 	if value, ok := _u.mutation.SourceURL(); ok {
 		_spec.SetField(calendarevent.FieldSourceURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.GoogleEventID(); ok {
+		_spec.SetField(calendarevent.FieldGoogleEventID, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.SyncPending(); ok {
+		_spec.SetField(calendarevent.FieldSyncPending, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(calendarevent.FieldUpdatedAt, field.TypeTime, value)

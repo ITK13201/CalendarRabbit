@@ -376,6 +376,133 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/google/auth": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "google"
+                ],
+                "summary": "Google 連携の認可URLを返す",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.googleAuthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/google/callback": {
+            "get": {
+                "tags": [
+                    "google"
+                ],
+                "summary": "Google 認可コールバック（トークン交換して連携を確立し設定画面へ戻す）",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "CSRF state",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "認可コード",
+                        "name": "code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
+                    }
+                }
+            }
+        },
+        "/api/google/connection": {
+            "delete": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "google"
+                ],
+                "summary": "Google 連携を解除する（専用カレンダーの削除/保持を選択）",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "専用カレンダーごと削除するか（既定 false=残す）",
+                        "name": "delete_calendar",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/google/resync": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "google"
+                ],
+                "summary": "未同期イベントを手動で再同期する",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.googleResyncResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service Unavailable",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/google/status": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "google"
+                ],
+                "summary": "Google 連携状態を取得する（未同期件数を含む）",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handler.googleStatusResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/health": {
             "get": {
                 "produces": [
@@ -579,6 +706,40 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "handler.googleAuthResponse": {
+            "type": "object",
+            "properties": {
+                "auth_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.googleResyncResponse": {
+            "type": "object",
+            "properties": {
+                "pending_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handler.googleStatusResponse": {
+            "type": "object",
+            "properties": {
+                "configured": {
+                    "type": "boolean"
+                },
+                "connected": {
+                    "type": "boolean"
+                },
+                "needs_reconnect": {
+                    "description": "NeedsReconnect はトークン失効やカレンダー消失で未連携相当へ落ちており再連携が必要な状態。",
+                    "type": "boolean"
+                },
+                "pending_count": {
+                    "type": "integer"
                 }
             }
         },

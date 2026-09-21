@@ -37,8 +37,23 @@ type Config struct {
 	SearchAPIKey     string
 	SearchMaxResults int
 
+	// Google Calendar 連携（任意機能。未設定でも Load は成功する）
+	GoogleOAuthClientID     string
+	GoogleOAuthClientSecret string
+	GoogleOAuthRedirectURL  string
+	GoogleTokenEncKey       string
+
 	// CORS
 	AllowedOrigins []string
+}
+
+// GoogleSyncEnabled は Google Calendar 連携が設定済み（利用可能）かどうかを返す。
+// OAuth クライアント情報とトークン暗号鍵がすべて揃っている場合のみ有効とする。
+func (c *Config) GoogleSyncEnabled() bool {
+	return c.GoogleOAuthClientID != "" &&
+		c.GoogleOAuthClientSecret != "" &&
+		c.GoogleOAuthRedirectURL != "" &&
+		c.GoogleTokenEncKey != ""
 }
 
 // LLM プロバイダ識別子。
@@ -89,7 +104,12 @@ func Load() (*Config, error) {
 		SearchProvider:   envOrDefault("SEARCH_PROVIDER", defaultSearchProvider),
 		SearchAPIKey:     os.Getenv("SEARCH_API_KEY"),
 		SearchMaxResults: envIntOrDefault("SEARCH_MAX_RESULTS", defaultSearchMaxResults),
-		AllowedOrigins:   parseOrigins(envOrDefault("ALLOWED_ORIGINS", "http://localhost:5173")),
+		// Google Calendar 連携（任意機能）。未設定でも Load は失敗させない（design.md D6）。
+		GoogleOAuthClientID:     os.Getenv("GOOGLE_OAUTH_CLIENT_ID"),
+		GoogleOAuthClientSecret: os.Getenv("GOOGLE_OAUTH_CLIENT_SECRET"),
+		GoogleOAuthRedirectURL:  os.Getenv("GOOGLE_OAUTH_REDIRECT_URL"),
+		GoogleTokenEncKey:       os.Getenv("GOOGLE_TOKEN_ENC_KEY"),
+		AllowedOrigins:          parseOrigins(envOrDefault("ALLOWED_ORIGINS", "http://localhost:5173")),
 	}
 
 	// プロバイダに応じて必須項目を切り替える（design.md D6）。
