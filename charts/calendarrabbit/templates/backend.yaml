@@ -50,6 +50,10 @@ spec:
               value: {{ .Values.backend.env.searchMaxResults | quote }}
             - name: ALLOWED_ORIGINS
               value: {{ .Values.backend.env.allowedOrigins | quote }}
+            - name: GOOGLE_OAUTH_CLIENT_ID
+              value: {{ .Values.backend.env.googleOAuthClientID | quote }}
+            - name: GOOGLE_OAUTH_REDIRECT_URL
+              value: {{ .Values.backend.env.googleOAuthRedirectURL | quote }}
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -70,6 +74,16 @@ spec:
                 secretKeyRef:
                   name: {{ include "calendarrabbit.backendSecretName" . }}
                   key: SEARCH_API_KEY
+            - name: GOOGLE_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
+                  key: GOOGLE_OAUTH_CLIENT_SECRET
+            - name: GOOGLE_TOKEN_ENC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "calendarrabbit.backendSecretName" . }}
+                  key: GOOGLE_TOKEN_ENC_KEY
           readinessProbe:
             httpGet:
               path: /api/health

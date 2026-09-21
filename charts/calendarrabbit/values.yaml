@@ -21,6 +21,10 @@ backend:
     searchProvider: tavily
     searchMaxResults: 10
     allowedOrigins: "*"
+    # Google Calendar 連携（非機密）。空なら連携は休眠する。
+    # 有効化する場合は --set で上書きする。
+    googleOAuthClientID: ""
+    googleOAuthRedirectURL: ""
   resources:
     requests:
       cpu: 50m
@@ -36,6 +40,11 @@ backend:
     claudeApiKey: "dummy-claude-api-key"
     deepseekApiKey: "dummy-deepseek-api-key"
     searchApiKey: "dummy-search-api-key"
+    # Google Calendar 連携（機密）。既定は空文字。
+    # ダミー値にすると backend が「設定済み」と誤認し連携を起動しうるため、
+    # 休眠を保つには空文字のままにする。有効化時は --set で上書きする。
+    googleOAuthClientSecret: ""
+    googleTokenEncKey: ""
 
 frontend:
   image:
